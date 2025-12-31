@@ -1,0 +1,54 @@
+<div class="card">
+    <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4);">
+        Dependencies
+    </h3>
+    
+    {% if dependencies %}
+    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+        {% for dep in dependencies %}
+        <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); background: var(--bg-tertiary); border-radius: var(--radius-md);">
+            <div style="font-size: var(--text-xl);">
+                {% if dep.is_satisfied %}
+                ✅
+                {% elif dep.dependency_type == 'incompatible' %}
+                🔴
+                {% else %}
+                ⚠️
+                {% endif %}
+            </div>
+            <div style="flex: 1;">
+                <div style="color: var(--text-primary); font-weight: var(--font-medium);">
+                    {{ dep.dependency_name }}
+                </div>
+                <div style="font-size: var(--text-sm); color: var(--text-secondary);">
+                    {% if dep.dependency_type == 'required' %}
+                    Required
+                    {% elif dep.dependency_type == 'optional' %}
+                    Optional
+                    {% else %}
+                    Incompatible
+                    {% endif %}
+                    {% if dep.min_version or dep.max_version %}
+                    ({% if dep.min_version %}min: {{ dep.min_version }}{% endif %}{% if dep.min_version and dep.max_version %} / {% endif %}{% if dep.max_version %}max: {{ dep.max_version }}{% endif %})
+                    {% endif %}
+                </div>
+            </div>
+            {% if not dep.is_satisfied and dep.dependency_type != 'incompatible' %}
+            <button 
+                class="btn btn-primary"
+                style="font-size: var(--text-sm); padding: var(--space-1) var(--space-3);"
+                hx-post="/api/dependencies/install/{{ dep.dependency_name }}"
+                hx-target="#notification-area"
+                hx-swap="beforeend">
+                Install
+            </button>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+        No dependencies
+    </div>
+    {% endif %}
+</div>

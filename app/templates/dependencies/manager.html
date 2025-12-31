@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: var(--space-6);">
+    <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
+        Dependency Manager
+    </h1>
+    <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">
+        View and manage mod dependencies
+    </p>
+    
+    <div id="dependency-tree" 
+         hx-get="/api/dependencies/tree"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+            Loading dependency tree...
+        </div>
+    </div>
+</div>
+{% endblock %}

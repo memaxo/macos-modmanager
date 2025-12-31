@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: var(--space-8);">
+    <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
+        Dashboard
+    </h1>
+    <p style="color: var(--text-secondary);">Overview of your mod installation</p>
+</div>
+
+<!-- Stats Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-6); margin-bottom: var(--space-8);">
+    {% set value = stats.total_mods %}
+    {% set label = "Total Mods" %}
+    {% set change = stats.mod_change %}
+    {% include "components/stats_card.html" %}
+    
+    {% set value = stats.enabled_mods %}
+    {% set label = "Enabled Mods" %}
+    {% set change = None %}
+    {% include "components/stats_card.html" %}
+    
+    {% set value = stats.conflicts %}
+    {% set label = "Conflicts" %}
+    {% set change = None %}
+    {% include "components/stats_card.html" %}
+    
+    {% set value = stats.updates_available %}
+    {% set label = "Updates Available" %}
+    {% set change = None %}
+    {% include "components/stats_card.html" %}
+</div>
+
+<!-- Quick Actions -->
+<div style="margin-bottom: var(--space-8);">
+    <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4);">
+        Quick Actions
+    </h2>
+    <div style="display: flex; gap: var(--space-4); flex-wrap: wrap;">
+        <a href="/mods/install" class="btn btn-primary">
+            Install Mod
+        </a>
+        <a href="/collections/import" class="btn btn-secondary">
+            Import Collection
+        </a>
+        <button 
+            class="btn btn-secondary"
+            hx-post="/api/updates/check"
+            hx-target="#notification-area"
+            hx-swap="beforeend">
+            Check for Updates
+        </button>
+    </div>
+</div>
+
+<!-- System Health -->
+<div style="margin-bottom: var(--space-8);">
+    <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4);">
+        System Health
+    </h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--space-4);">
+        {% for health in system_health %}
+        {% set status = health.status %}
+        {% set label = health.label %}
+        {% set description = health.description %}
+        {% include "components/health_indicator.html" %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+        <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary);">
+            Recent Activity
+        </h2>
+        <button 
+            class="btn-ghost"
+            hx-get="/api/dashboard/activity"
+            hx-target="#activity-feed"
+            hx-swap="innerHTML">
+            Refresh
+        </button>
+    </div>
+    <div id="activity-feed" 
+         hx-get="/api/dashboard/activity" 
+         hx-trigger="load, every 30s"
+         hx-swap="innerHTML"
+         style="max-height: 400px; overflow-y: auto;">
+        <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+            Loading activity...
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}

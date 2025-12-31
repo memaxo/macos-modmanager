@@ -1,0 +1,42 @@
+<div class="card" style="padding: var(--space-4);">
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--space-3);">
+        <div style="flex: 1;">
+            <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-1);">
+                {{ profile.name }}
+            </h3>
+            {% if profile.description %}
+            <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-2);">
+                {{ profile.description }}
+            </p>
+            {% endif %}
+            <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+                <span class="badge badge-info">{{ profile.mod_count }} mods</span>
+                {% if profile.is_default %}
+                <span class="badge badge-success">Default</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div style="display: flex; gap: var(--space-2);">
+        <button 
+            class="btn btn-primary"
+            style="flex: 1;"
+            hx-post="/api/profiles/{{ profile.id }}/activate"
+            hx-target="#notification-area"
+            hx-swap="beforeend">
+            Activate
+        </button>
+        <a href="/profiles/{{ profile.id }}/edit" class="btn btn-secondary">
+            Edit
+        </a>
+        <button 
+            class="btn btn-danger"
+            hx-delete="/api/profiles/{{ profile.id }}"
+            hx-confirm="Are you sure you want to delete this profile?"
+            hx-target="#notification-area"
+            hx-swap="beforeend">
+            Delete
+        </button>
+    </div>
+</div>

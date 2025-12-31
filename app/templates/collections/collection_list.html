@@ -1,0 +1,13 @@
+{% if collections %}
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-6);">
+    {% for collection in collections %}
+    {% include "components/collection_card.html" %}
+    {% endfor %}
+</div>
+{% else %}
+<div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+    <div style="font-size: var(--text-2xl); margin-bottom: var(--space-2);">📚</div>
+    <div>No collections found</div>
+    <a href="/collections/import" class="btn btn-primary" style="margin-top: var(--space-4);">Import Collection</a>
+</div>
+{% endif %}

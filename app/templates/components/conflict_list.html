@@ -1,0 +1,34 @@
+<div class="card">
+    <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4);">
+        Conflicts ({{ conflicts|length }})
+    </h3>
+    
+    {% if conflicts %}
+    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+        {% for conflict in conflicts %}
+        <div style="padding: var(--space-4); background: var(--bg-tertiary); border-radius: var(--radius-md); border-left: 3px solid {% if conflict.severity == 'critical' %}var(--accent-error){% elif conflict.severity == 'warning' %}var(--accent-warning){% else %}var(--accent-info){% endif %};">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--space-2);">
+                <div>
+                    <div style="color: var(--text-primary); font-weight: var(--font-medium); margin-bottom: var(--space-1);">
+                        {{ conflict.conflict_type|replace('_', ' ')|title }}
+                    </div>
+                    <div style="font-size: var(--text-sm); color: var(--text-secondary); font-family: monospace;">
+                        {{ conflict.file_path }}
+                    </div>
+                </div>
+                <span class="badge {% if conflict.severity == 'critical' %}badge-error{% elif conflict.severity == 'warning' %}badge-warning{% else %}badge-info{% endif %}">
+                    {{ conflict.severity|title }}
+                </span>
+            </div>
+            <a href="/conflicts/{{ conflict.id }}" class="btn btn-secondary" style="font-size: var(--text-sm); padding: var(--space-1) var(--space-3);">
+                Resolve →
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+        No conflicts detected
+    </div>
+    {% endif %}
+</div>

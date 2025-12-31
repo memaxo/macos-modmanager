@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: var(--space-6);">
+    <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
+        Import Collection
+    </h1>
+    <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">
+        Import a mod collection from Nexus Mods
+    </p>
+    
+    <div class="card">
+        <form 
+            hx-post="/api/collections/import"
+            hx-target="#import-result"
+            hx-swap="innerHTML">
+            <div style="margin-bottom: var(--space-4);">
+                <label style="display: block; font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-secondary); margin-bottom: var(--space-2);">
+                    Collection URL
+                </label>
+                <input 
+                    type="url" 
+                    name="url"
+                    placeholder="https://www.nexusmods.com/cyberpunk2077/collections/..."
+                    class="input"
+                    required>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                Import Collection
+            </button>
+        </form>
+        
+        <div id="import-result" style="margin-top: var(--space-6);"></div>
+    </div>
+</div>
+{% endblock %}

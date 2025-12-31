@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: var(--space-6);">
+    <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
+        Conflict Resolution
+    </h1>
+    <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">
+        Resolve conflicts between mods
+    </p>
+    
+    <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-4);">
+        <button class="btn btn-secondary" onclick="filterConflicts('all')">All</button>
+        <button class="btn btn-secondary" onclick="filterConflicts('critical')">Critical</button>
+        <button class="btn btn-secondary" onclick="filterConflicts('warning')">Warning</button>
+        <button class="btn btn-secondary" onclick="filterConflicts('resolved')">Resolved</button>
+    </div>
+    
+    <div id="conflict-list" 
+         hx-get="/api/compatibility/conflicts"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+            Loading conflicts...
+        </div>
+    </div>
+</div>
+{% endblock %}

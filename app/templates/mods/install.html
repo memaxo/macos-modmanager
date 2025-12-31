@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: var(--space-6);">
+    <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
+        Install Mod
+    </h1>
+    <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">
+        Install mods from file, Nexus Mods, or collections
+    </p>
+    
+    <!-- Tabs -->
+    <div style="border-bottom: 1px solid var(--border-primary); margin-bottom: var(--space-6);">
+        <div style="display: flex; gap: var(--space-4);">
+            <button 
+                class="tab-button active"
+                onclick="showInstallTab('upload')"
+                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid var(--accent-primary); color: var(--accent-primary); cursor: pointer;">
+                Upload File
+            </button>
+            <button 
+                class="tab-button"
+                onclick="showInstallTab('nexus')"
+                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); cursor: pointer;">
+                From Nexus
+            </button>
+            <button 
+                class="tab-button"
+                onclick="showInstallTab('collection')"
+                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); cursor: pointer;">
+                From Collection
+            </button>
+        </div>
+    </div>
+    
+    <!-- Tab Content -->
+    <div id="install-content">
+        <!-- Upload File Tab -->
+        <div id="tab-upload" class="install-tab active">
+            {% include "components/dropzone.html" %}
+            
+            <div class="card" style="margin-top: var(--space-6);">
+                <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4);">
+                    Options
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                    <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                        <input type="checkbox" name="check_compatibility" checked style="width: 1.25rem; height: 1.25rem;">
+                        <span style="color: var(--text-secondary);">Check compatibility before install</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                        <input type="checkbox" name="create_backup" checked style="width: 1.25rem; height: 1.25rem;">
+                        <span style="color: var(--text-secondary);">Create backup before install</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- From Nexus Tab -->
+        <div id="tab-nexus" class="install-tab" style="display: none;">
+            <div class="card">
+                <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4);">
+                    Install from Nexus Mods
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+                    <div>
+                        <label style="display: block; font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-secondary); margin-bottom: var(--space-2);">
+                            Nexus Mod ID
+                        </label>
+                        <input 
+                            type="number" 
+                            id="nexus-mod-id"
+                            placeholder="Enter Nexus Mod ID"
+                            class="input"
+                            style="max-width: 300px;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-secondary); margin-bottom: var(--space-2);">
+                            Or paste Nexus URL
+                        </label>
+                        <input 
+                            type="url" 
+                            id="nexus-url"
+                            placeholder="https://www.nexusmods.com/cyberpunk2077/mods/..."
+                            class="input"
+                            style="max-width: 500px;">
+                    </div>
+                    <button 
+                        class="btn btn-primary"
+                        onclick="searchNexusMod()">
+                        Search
+                    </button>
+                </div>
+                
+                <div id="nexus-preview" style="margin-top: var(--space-6);"></div>
+            </div>
+        </div>
+        
+        <!-- From Collection Tab -->
+        <div id="tab-collection" class="install-tab" style="display: none;">
+            <div class="card">
+                <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4);">
+                    Import Collection
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+                    <div>
+                        <label style="display: block; font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-secondary); margin-bottom: var(--space-2);">
+                            Collection URL
+                        </label>
+                        <input 
+                            type="url" 
+                            id="collection-url"
+                            placeholder="https://www.nexusmods.com/cyberpunk2077/collections/..."
+                            class="input"
+                            style="max-width: 500px;">
+                    </div>
+                    <button 
+                        class="btn btn-primary"
+                        onclick="importCollection()">
+                        Import Collection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Installation Queue -->
+    <div id="install-queue" style="margin-top: var(--space-8);"></div>
+</div>
+
+<script src="/static/js/install.js"></script>
+{% endblock %}

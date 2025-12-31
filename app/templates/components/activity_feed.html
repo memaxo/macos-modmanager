@@ -1,0 +1,13 @@
+{% if activities %}
+    {% for activity in activities %}
+    {% set type = activity.type %}
+    {% set message = activity.message %}
+    {% set timestamp = activity.timestamp %}
+    {% set undo_action = activity.get('undo_action') %}
+    {% include "components/activity_item.html" %}
+    {% endfor %}
+{% else %}
+<div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+    No recent activity
+</div>
+{% endif %}

@@ -1,0 +1,31 @@
+<div class="card" style="padding: var(--space-4); margin-bottom: var(--space-3);">
+    <div style="display: flex; align-items: start; gap: var(--space-3);">
+        <div style="font-size: var(--text-xl);">
+            {% if type == 'install' %}✅
+            {% elif type == 'uninstall' %}❌
+            {% elif type == 'update' %}🔄
+            {% elif type == 'conflict' %}⚠️
+            {% elif type == 'error' %}🔴
+            {% else %}ℹ️
+            {% endif %}
+        </div>
+        <div style="flex: 1;">
+            <div style="color: var(--text-primary); margin-bottom: var(--space-1);">
+                {{ message }}
+            </div>
+            <div style="font-size: var(--text-xs); color: var(--text-tertiary);">
+                {{ timestamp }}
+            </div>
+        </div>
+        {% if undo_action is defined and undo_action %}
+        <button 
+            class="btn-ghost" 
+            style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);"
+            hx-post="{{ undo_action }}"
+            hx-target="#notification-area"
+            hx-swap="beforeend">
+            Undo
+        </button>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,59 @@
+<div class="card" style="padding: var(--space-4); display: flex; align-items: center; gap: var(--space-4); position: relative;">
+    <input 
+        type="checkbox" 
+        class="mod-checkbox" 
+        value="{{ mod.id }}"
+        style="position: absolute; top: var(--space-2); right: var(--space-2);"
+        onchange="updateBulkSelection()">
+    
+    {% if mod.thumbnail_url %}
+    <div style="width: 4rem; height: 4rem; background: var(--bg-tertiary); border-radius: var(--radius-md); overflow: hidden; flex-shrink: 0;">
+        <img src="{{ mod.thumbnail_url }}" alt="{{ mod.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+    </div>
+    {% else %}
+    <div style="width: 4rem; height: 4rem; background: var(--bg-tertiary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); flex-shrink: 0;">
+        📦
+    </div>
+    {% endif %}
+    
+    <div style="flex: 1; min-width: 0;">
+        <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-1);">
+            {{ mod.name }}
+        </h3>
+        {% if mod.author %}
+        <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-2);">
+            by {{ mod.author }}
+        </p>
+        {% endif %}
+        <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+            {% if mod.version %}
+            <span class="badge badge-info">{{ mod.version }}</span>
+            {% endif %}
+            {% if mod.mod_type %}
+            <span class="badge badge-success">{{ mod.mod_type }}</span>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div style="display: flex; align-items: center; gap: var(--space-4);">
+        <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+            <input 
+                type="checkbox" 
+                class="mod-toggle" 
+                data-mod-id="{{ mod.id }}"
+                {% if mod.is_enabled %}checked{% endif %}
+                hx-post="/api/mods/{{ mod.id }}/toggle"
+                hx-trigger="change"
+                hx-target="#notification-area"
+                hx-swap="beforeend"
+                style="width: 2.5rem; height: 1.5rem; border-radius: var(--radius-full); background: {% if mod.is_enabled %}var(--accent-success){% else %}var(--bg-tertiary){% endif %};">
+            <span style="font-size: var(--text-sm); color: var(--text-secondary);">
+                {% if mod.is_enabled %}Enabled{% else %}Disabled{% endif %}
+            </span>
+        </label>
+        
+        <a href="/mods/{{ mod.id }}" class="btn-ghost" style="padding: var(--space-2);">
+            ⋮
+        </a>
+    </div>
+</div>

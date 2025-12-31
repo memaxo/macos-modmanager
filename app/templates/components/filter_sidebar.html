@@ -1,0 +1,57 @@
+<div class="card" style="padding: var(--space-4);">
+    <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4);">
+        Filters
+    </h3>
+    
+    <!-- Type Filter -->
+    <div style="margin-bottom: var(--space-4);">
+        <div style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-secondary); margin-bottom: var(--space-2);">
+            Type
+        </div>
+        <label style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) 0; cursor: pointer;">
+            <input type="checkbox" name="type-redscript" value="redscript" onchange="updateFilter('type', this)">
+            <span style="color: var(--text-secondary);">redscript</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) 0; cursor: pointer;">
+            <input type="checkbox" name="type-archive" value="archive" onchange="updateFilter('type', this)">
+            <span style="color: var(--text-secondary);">archive</span>
+        </label>
+    </div>
+    
+    <!-- Status Filter -->
+    <div style="margin-bottom: var(--space-4);">
+        <div style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-secondary); margin-bottom: var(--space-2);">
+            Status
+        </div>
+        <label style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) 0; cursor: pointer;">
+            <input type="checkbox" name="status-enabled" value="enabled" checked onchange="updateFilter('status', this)">
+            <span style="color: var(--text-secondary);">Enabled</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) 0; cursor: pointer;">
+            <input type="checkbox" name="status-disabled" value="disabled" onchange="updateFilter('status', this)">
+            <span style="color: var(--text-secondary);">Disabled</span>
+        </label>
+    </div>
+    
+    <!-- Compatibility Filter -->
+    <div style="margin-bottom: var(--space-4);">
+        <div style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-secondary); margin-bottom: var(--space-2);">
+            Compatibility
+        </div>
+        <label style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) 0; cursor: pointer;">
+            <input type="checkbox" name="compat-compatible" value="compatible" checked onchange="updateFilter('compatibility', this)">
+            <span style="color: var(--text-secondary);">Compatible</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) 0; cursor: pointer;">
+            <input type="checkbox" name="compat-incompatible" value="incompatible" onchange="updateFilter('compatibility', this)">
+            <span style="color: var(--text-secondary);">Incompatible</span>
+        </label>
+    </div>
+    
+    <button 
+        class="btn btn-secondary" 
+        style="width: 100%;"
+        onclick="clearFilters()">
+        Clear Filters
+    </button>
+</div>

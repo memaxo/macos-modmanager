@@ -1,0 +1,13 @@
+<div class="card" style="text-align: center;">
+    <div style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--accent-primary); margin-bottom: var(--space-2);">
+        {{ value }}
+    </div>
+    <div style="font-size: var(--text-sm); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">
+        {{ label }}
+    </div>
+    {% if change is defined and change %}
+    <div style="font-size: var(--text-xs); color: {% if change > 0 %}var(--accent-success){% else %}var(--accent-error){% endif %}; margin-top: var(--space-1);">
+        {% if change > 0 %}+{% endif %}{{ change }} from last check
+    </div>
+    {% endif %}
+</div>

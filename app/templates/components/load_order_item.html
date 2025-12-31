@@ -1,0 +1,19 @@
+<div class="load-order-item" data-mod-id="{{ mod.id }}" style="display: flex; align-items: center; gap: var(--space-4); padding: var(--space-3); background: var(--bg-tertiary); border-radius: var(--radius-md); margin-bottom: var(--space-2); cursor: move;">
+    <div class="drag-handle" style="font-size: var(--text-xl); color: var(--text-tertiary); cursor: grab;">☰</div>
+    <div class="priority-number" style="width: 2rem; text-align: center; font-weight: var(--font-bold); color: var(--accent-primary);">
+        {{ priority }}
+    </div>
+    <div style="flex: 1;">
+        <div style="color: var(--text-primary); font-weight: var(--font-medium);">
+            {{ mod.name }}
+        </div>
+        {% if mod.author %}
+        <div style="font-size: var(--text-sm); color: var(--text-secondary);">
+            by {{ mod.author }}
+        </div>
+        {% endif %}
+    </div>
+    {% if conflicts %}
+    <div style="color: var(--accent-warning);">⚠️</div>
+    {% endif %}
+</div>

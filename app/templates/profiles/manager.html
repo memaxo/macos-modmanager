@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: var(--space-6);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+        <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary);">
+            Mod Profiles
+        </h1>
+        <a href="/profiles/create" class="btn btn-primary">
+            Create New Profile
+        </a>
+    </div>
+    
+    <div id="profile-list" 
+         hx-get="/api/profiles"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+            Loading profiles...
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+<div class="card">
+    {% if mod.description %}
+    <div style="margin-bottom: var(--space-6);">
+        <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-3);">
+            Description
+        </h2>
+        <p style="color: var(--text-secondary); line-height: var(--leading-relaxed); white-space: pre-wrap;">
+            {{ mod.description }}
+        </p>
+    </div>
+    {% endif %}
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4);">
+        <div>
+            <div style="font-size: var(--text-sm); color: var(--text-tertiary); margin-bottom: var(--space-1);">
+                Install Date
+            </div>
+            <div style="color: var(--text-primary);">
+                {{ mod.install_date.strftime("%Y-%m-%d %H:%M") if mod.install_date else "Unknown" }}
+            </div>
+        </div>
+        
+        {% if mod.file_size %}
+        <div>
+            <div style="font-size: var(--text-sm); color: var(--text-tertiary); margin-bottom: var(--space-1);">
+                File Size
+            </div>
+            <div style="color: var(--text-primary);">
+                {{ "%.2f"|format(mod.file_size / 1024 / 1024) }} MB
+            </div>
+        </div>
+        {% endif %}
+        
+        <div>
+            <div style="font-size: var(--text-sm); color: var(--text-tertiary); margin-bottom: var(--space-1);">
+                Status
+            </div>
+            <div>
+                {% if mod.is_enabled %}
+                <span class="badge badge-success">Enabled</span>
+                {% else %}
+                <span class="badge badge-error">Disabled</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if mod.mod_type %}
+        <div>
+            <div style="font-size: var(--text-sm); color: var(--text-tertiary); margin-bottom: var(--space-1);">
+                Type
+            </div>
+            <div>
+                <span class="badge badge-info">{{ mod.mod_type }}</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>

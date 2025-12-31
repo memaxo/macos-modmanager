@@ -1,0 +1,21 @@
+<div class="toast toast-{{ type }}" style="background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-lg); padding: var(--space-3); margin-bottom: var(--space-2); box-shadow: var(--shadow-lg); animation: slideUp 0.3s ease;">
+    <div style="display: flex; align-items: center; gap: var(--space-2);">
+        <span style="font-size: var(--text-lg);">
+            {% if type == 'success' %}✅
+            {% elif type == 'error' %}🔴
+            {% elif type == 'warning' %}⚠️
+            {% else %}ℹ️
+            {% endif %}
+        </span>
+        <span style="color: var(--text-primary);">{{ message }}</span>
+    </div>
+</div>
+
+<script>
+    // Auto-remove toast after 3 seconds
+    setTimeout(() => {
+        const toast = document.currentScript.parentElement;
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+</script>

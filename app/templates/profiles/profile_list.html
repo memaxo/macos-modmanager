@@ -1,0 +1,13 @@
+{% if profiles %}
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-6);">
+    {% for profile in profiles %}
+    {% include "components/profile_card.html" %}
+    {% endfor %}
+</div>
+{% else %}
+<div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+    <div style="font-size: var(--text-2xl); margin-bottom: var(--space-2);">👤</div>
+    <div>No profiles found</div>
+    <a href="/profiles/create" class="btn btn-primary" style="margin-top: var(--space-4);">Create Your First Profile</a>
+</div>
+{% endif %}

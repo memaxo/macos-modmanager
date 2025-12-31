@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: var(--space-6);">
+    <a href="/collections" class="btn-ghost" style="margin-bottom: var(--space-4);">← Back to Collections</a>
+    
+    <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
+        {{ collection.name }}
+    </h1>
+    {% if collection.author %}
+    <p style="font-size: var(--text-lg); color: var(--text-secondary); margin-bottom: var(--space-6);">
+        by {{ collection.author }}
+    </p>
+    {% endif %}
+    
+    {% if collection.description %}
+    <div class="card" style="margin-bottom: var(--space-6);">
+        <p style="color: var(--text-secondary); line-height: var(--leading-relaxed); white-space: pre-wrap;">
+            {{ collection.description }}
+        </p>
+    </div>
+    {% endif %}
+    
+    <div class="card">
+        <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4);">
+            Mods in Collection ({{ mods|length }})
+        </h3>
+        
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+            {% for mod in mods %}
+            <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                <input 
+                    type="checkbox" 
+                    {% if mod.is_required %}checked disabled{% endif %}
+                    style="width: 1.25rem; height: 1.25rem;">
+                <div style="flex: 1;">
+                    <div style="color: var(--text-primary); font-weight: var(--font-medium);">
+                        {{ mod.name or "Mod " + mod.nexus_mod_id|string }}
+                    </div>
+                    {% if mod.is_required %}
+                    <span class="badge badge-warning" style="font-size: var(--text-xs);">Required</span>
+                    {% else %}
+                    <span class="badge badge-info" style="font-size: var(--text-xs);">Optional</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div style="display: flex; gap: var(--space-2); margin-top: var(--space-6);">
+            <button 
+                class="btn btn-primary"
+                hx-post="/api/collections/{{ collection.id }}/install"
+                hx-target="#notification-area"
+                hx-swap="beforeend">
+                Install All
+            </button>
+            <button 
+                class="btn btn-secondary"
+                onclick="installSelected()">
+                Install Selected
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

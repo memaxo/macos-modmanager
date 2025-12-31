@@ -1,0 +1,14 @@
+{% if mods %}
+<div style="display: flex; flex-direction: column; gap: var(--space-2);">
+    {% for mod in mods %}
+    {% include "components/load_order_item.html" with context %}
+    {% set priority = loop.index %}
+    {% set conflicts = [] %}
+    {% include "components/load_order_item.html" %}
+    {% endfor %}
+</div>
+{% else %}
+<div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+    No mods in load order
+</div>
+{% endif %}

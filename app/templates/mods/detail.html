@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: var(--space-6);">
+    <a href="/mods" class="btn-ghost" style="margin-bottom: var(--space-4);">← Back to Mods</a>
+    
+    <!-- Mod Header -->
+    <div style="display: flex; gap: var(--space-6); margin-bottom: var(--space-6);">
+        {% if mod.thumbnail_url %}
+        <div style="width: 12rem; height: 8rem; background: var(--bg-tertiary); border-radius: var(--radius-lg); overflow: hidden; flex-shrink: 0;">
+            <img src="{{ mod.thumbnail_url }}" alt="{{ mod.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        {% else %}
+        <div style="width: 12rem; height: 8rem; background: var(--bg-tertiary); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); font-size: var(--text-4xl); flex-shrink: 0;">
+            📦
+        </div>
+        {% endif %}
+        
+        <div style="flex: 1;">
+            <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
+                {{ mod.name }}
+            </h1>
+            {% if mod.author %}
+            <p style="font-size: var(--text-lg); color: var(--text-secondary); margin-bottom: var(--space-4);">
+                by {{ mod.author }}
+            </p>
+            {% endif %}
+            
+            <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-4); flex-wrap: wrap;">
+                {% if mod.version %}
+                <span class="badge badge-info">v{{ mod.version }}</span>
+                {% endif %}
+                {% if mod.mod_type %}
+                <span class="badge badge-success">{{ mod.mod_type }}</span>
+                {% endif %}
+                {% if mod.is_enabled %}
+                <span class="badge badge-success">Enabled</span>
+                {% else %}
+                <span class="badge badge-error">Disabled</span>
+                {% endif %}
+            </div>
+            
+            <div style="display: flex; gap: var(--space-2);">
+                <button 
+                    class="btn {% if mod.is_enabled %}btn-secondary{% else %}btn-primary{% endif %}"
+                    hx-post="/api/mods/{{ mod.id }}/toggle"
+                    hx-trigger="click"
+                    hx-target="#notification-area"
+                    hx-swap="beforeend">
+                    {% if mod.is_enabled %}Disable{% else %}Enable{% endif %}
+                </button>
+                <button 
+                    class="btn btn-danger"
+                    hx-delete="/api/mods/{{ mod.id }}"
+                    hx-trigger="click"
+                    hx-confirm="Are you sure you want to uninstall this mod?"
+                    hx-target="#notification-area"
+                    hx-swap="beforeend"
+                    hx-redirect="/mods">
+                    Uninstall
+                </button>
+                {% if mod.nexus_url %}
+                <a href="{{ mod.nexus_url }}" target="_blank" class="btn btn-secondary">
+                    View on Nexus
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabs -->
+    <div style="border-bottom: 1px solid var(--border-primary); margin-bottom: var(--space-6);">
+        <div style="display: flex; gap: var(--space-4);">
+            <button 
+                class="tab-button {% if active_tab == 'overview' %}active{% endif %}"
+                onclick="showTab('overview')"
+                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid {% if active_tab == 'overview' %}var(--accent-primary){% else %}transparent{% endif %}; color: {% if active_tab == 'overview' %}var(--accent-primary){% else %}var(--text-secondary){% endif %}; cursor: pointer; transition: all var(--transition-base);">
+                Overview
+            </button>
+            <button 
+                class="tab-button {% if active_tab == 'files' %}active{% endif %}"
+                onclick="showTab('files')"
+                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid {% if active_tab == 'files' %}var(--accent-primary){% else %}transparent{% endif %}; color: {% if active_tab == 'files' %}var(--accent-primary){% else %}var(--text-secondary){% endif %}; cursor: pointer; transition: all var(--transition-base);">
+                Files
+            </button>
+            <button 
+                class="tab-button {% if active_tab == 'dependencies' %}active{% endif %}"
+                onclick="showTab('dependencies')"
+                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid {% if active_tab == 'dependencies' %}var(--accent-primary){% else %}transparent{% endif %}; color: {% if active_tab == 'dependencies' %}var(--accent-primary){% else %}var(--text-secondary){% endif %}; cursor: pointer; transition: all var(--transition-base);">
+                Dependencies
+            </button>
+            <button 
+                class="tab-button {% if active_tab == 'conflicts' %}active{% endif %}"
+                onclick="showTab('conflicts')"
+                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid {% if active_tab == 'conflicts' %}var(--accent-primary){% else %}transparent{% endif %}; color: {% if active_tab == 'conflicts' %}var(--accent-primary){% else %}var(--text-secondary){% endif %}; cursor: pointer; transition: all var(--transition-base);">
+                Conflicts
+            </button>
+        </div>
+    </div>
+    
+    <!-- Tab Content -->
+    <div id="tab-content">
+        <div id="tab-overview" class="tab-pane {% if active_tab == 'overview' %}active{% endif %}">
+            {% include "mods/detail_overview.html" %}
+        </div>
+        <div id="tab-files" class="tab-pane {% if active_tab == 'files' %}active{% endif %}" style="display: none;">
+            <div hx-get="/api/mods/{{ mod.id }}/files" hx-trigger="load" hx-swap="innerHTML">
+                Loading files...
+            </div>
+        </div>
+        <div id="tab-dependencies" class="tab-pane {% if active_tab == 'dependencies' %}active{% endif %}" style="display: none;">
+            <div hx-get="/api/mods/{{ mod.id }}/dependencies" hx-trigger="load" hx-swap="innerHTML">
+                Loading dependencies...
+            </div>
+        </div>
+        <div id="tab-conflicts" class="tab-pane {% if active_tab == 'conflicts' %}active{% endif %}" style="display: none;">
+            <div hx-get="/api/mods/{{ mod.id }}/conflicts" hx-trigger="load" hx-swap="innerHTML">
+                Loading conflicts...
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showTab(tabName) {
+    // Hide all tab panes
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.style.display = 'none';
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.borderBottomColor = 'transparent';
+        btn.style.color = 'var(--text-secondary)';
+    });
+    
+    // Show selected tab pane
+    const pane = document.getElementById(`tab-${tabName}`);
+    if (pane) {
+        pane.style.display = 'block';
+    }
+    
+    // Activate button
+    const button = event.target;
+    button.classList.add('active');
+    button.style.borderBottomColor = 'var(--accent-primary)';
+    button.style.color = 'var(--accent-primary)';
+}
+</script>
+{% endblock %}

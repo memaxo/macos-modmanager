@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: var(--space-6);">
+    <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
+        Activity Log
+    </h1>
+    
+    <div id="activity-list" 
+         hx-get="/api/dashboard/activity"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+            Loading activity...
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: var(--space-6);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+        <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary);">
+            Collections
+        </h1>
+        <a href="/collections/import" class="btn btn-primary">
+            Import Collection
+        </a>
+    </div>
+    
+    <div style="display: flex; gap: var(--space-4); margin-bottom: var(--space-6);">
+        <input 
+            type="text" 
+            placeholder="Search collections..." 
+            class="input"
+            style="flex: 1; max-width: 400px;"
+            hx-get="/api/collections"
+            hx-trigger="keyup changed delay:300ms"
+            hx-target="#collection-list"
+            name="search">
+    </div>
+    
+    <div id="collection-list" 
+         hx-get="/api/collections" 
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+            Loading collections...
+        </div>
+    </div>
+</div>
+{% endblock %}

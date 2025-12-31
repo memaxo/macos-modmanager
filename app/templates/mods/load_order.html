@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: var(--space-6);">
+    <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
+        Load Order Manager
+    </h1>
+    <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">
+        Manage mod load order and priorities
+    </p>
+    
+    <div class="card" style="margin-bottom: var(--space-4);">
+        <div style="display: flex; gap: var(--space-4); align-items: center;">
+            <label style="color: var(--text-secondary);">Profile:</label>
+            <select id="profile-select" class="input" style="width: auto;" onchange="loadProfileLoadOrder()">
+                <option value="">Default Profile</option>
+                {% for profile in profiles %}
+                <option value="{{ profile.id }}">{{ profile.name }}</option>
+                {% endfor %}
+            </select>
+            <button class="btn btn-secondary" onclick="autoSort()">Auto-sort by Dependencies</button>
+            <button class="btn btn-primary" onclick="saveLoadOrder()">Save Order</button>
+        </div>
+    </div>
+    
+    <div id="load-order-list" 
+         hx-get="/api/mods/load-order"
+         hx-trigger="load"
+         hx-swap="innerHTML"
+         class="card"
+         style="padding: var(--space-4);">
+        <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+            Loading load order...
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script src="/static/js/load_order.js"></script>
+{% endblock %}

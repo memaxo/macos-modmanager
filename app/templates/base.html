@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyberpunk 2077 Mod Manager</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-primary);
+            width: 16rem;
+            min-height: calc(100vh - 4rem);
+            padding: var(--space-4);
+            position: fixed;
+            left: 0;
+            top: 4rem;
+            overflow-y: auto;
+            transition: transform var(--transition-base);
+        }
+        
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar-item {
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            transition: all var(--transition-base);
+            margin-bottom: var(--space-1);
+        }
+        
+        .sidebar-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        .sidebar-item.active {
+            background: var(--bg-tertiary);
+            color: var(--accent-primary);
+        }
+        
+        .sidebar-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            width: 3px;
+            height: 1.5rem;
+            background: var(--accent-primary);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        }
+        
+        .main-content {
+            margin-left: 16rem;
+            transition: margin-left var(--transition-base);
+        }
+        
+        .main-content.no-sidebar {
+            margin-left: 0;
+        }
+        
+        .sidebar-toggle {
+            display: none;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: var(--space-2);
+            border-radius: var(--radius-md);
+        }
+        
+        .sidebar-toggle:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: var(--z-modal);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .sidebar-toggle {
+                display: block;
+            }
+        }
+        
+        /* Notification Area */
+        .notification-area {
+            position: fixed;
+            top: 5rem;
+            right: var(--space-4);
+            z-index: var(--z-tooltip);
+            max-width: 24rem;
+        }
+        
+        /* Profile Switcher */
+        .profile-switcher {
+            position: relative;
+        }
+        
+        .profile-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            min-width: 12rem;
+            margin-top: var(--space-2);
+            padding: var(--space-2);
+            display: none;
+        }
+        
+        .profile-dropdown.open {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <nav style="background: var(--bg-primary); border-bottom: 1px solid var(--border-primary); height: 4rem; padding: 0 var(--space-6); position: sticky; top: 0; z-index: var(--z-sticky); backdrop-filter: blur(20px);">
+        <div style="max-width: 1280px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 100%;">
+            <div style="display: flex; align-items: center; gap: var(--space-4);">
+                <button class="sidebar-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">
+                    ☰
+                </button>
+                <h1 style="font-size: var(--text-xl); font-weight: var(--font-bold); color: var(--text-primary);">Cyberpunk 2077 Mod Manager</h1>
+            </div>
+            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                <div class="profile-switcher">
+                    <button 
+                        class="btn-ghost" 
+                        onclick="document.querySelector('.profile-dropdown').classList.toggle('open')"
+                        style="padding: var(--space-2) var(--space-3);">
+                        Profile ▼
+                    </button>
+                    <div class="profile-dropdown" id="profile-dropdown">
+                        <div style="padding: var(--space-2); border-bottom: 1px solid var(--border-primary); margin-bottom: var(--space-2);">
+                            <div style="font-weight: var(--font-semibold); color: var(--text-primary);">Current Profile</div>
+                            <div style="font-size: var(--text-sm); color: var(--text-secondary);" id="current-profile-name">Default</div>
+                        </div>
+                        <a href="/profiles" class="sidebar-item" style="margin: 0;">Manage Profiles</a>
+                    </div>
+                </div>
+                <button class="btn-ghost" style="padding: var(--space-2);" onclick="showNotifications()">
+                    🔔
+                </button>
+                <a href="/settings" class="btn-ghost" style="padding: var(--space-2);">
+                    ⚙️
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <aside class="sidebar" id="sidebar">
+        <nav>
+            <a href="/" class="sidebar-item {% if request.url.path == '/' %}active{% endif %}">
+                <span>📊</span> Dashboard
+            </a>
+            <a href="/mods" class="sidebar-item {% if '/mods' in request.url.path %}active{% endif %}">
+                <span>📦</span> Mods
+            </a>
+            <a href="/collections" class="sidebar-item {% if '/collections' in request.url.path %}active{% endif %}">
+                <span>📚</span> Collections
+            </a>
+            <a href="/profiles" class="sidebar-item {% if '/profiles' in request.url.path %}active{% endif %}">
+                <span>👤</span> Profiles
+            </a>
+            <a href="/conflicts" class="sidebar-item {% if '/conflicts' in request.url.path %}active{% endif %}">
+                <span>⚠️</span> Conflicts
+            </a>
+            <a href="/dependencies" class="sidebar-item {% if '/dependencies' in request.url.path %}active{% endif %}">
+                <span>🔗</span> Dependencies
+            </a>
+            <a href="/activity" class="sidebar-item {% if '/activity' in request.url.path %}active{% endif %}">
+                <span>📋</span> Activity Log
+            </a>
+            <a href="/settings" class="sidebar-item {% if '/settings' in request.url.path %}active{% endif %}">
+                <span>⚙️</span> Settings
+            </a>
+        </nav>
+    </aside>
+    
+    <div class="main-content" id="main-content">
+        <main style="max-width: 1280px; margin: 0 auto; padding: var(--space-8) var(--space-6);">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    
+    <div class="notification-area" id="notification-area"></div>
+    
+    <script>
+        function showNotifications() {
+            // TODO: Implement notification center
+            console.log('Notifications');
+        }
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            const profileDropdown = document.querySelector('.profile-dropdown');
+            if (profileDropdown && !event.target.closest('.profile-switcher')) {
+                profileDropdown.classList.remove('open');
+            }
+        });
+        
+        // Close sidebar on mobile when clicking outside
+        document.addEventListener('click', function(event) {
+            const sidebar = document.querySelector('.sidebar');
+            const toggle = document.querySelector('.sidebar-toggle');
+            if (window.innerWidth <= 768 && sidebar && toggle && 
+                !event.target.closest('.sidebar') && 
+                !event.target.closest('.sidebar-toggle')) {
+                sidebar.classList.remove('open');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: var(--space-6);">
+    <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
+        {% if profile %}Edit Profile{% else %}Create Profile{% endif %}
+    </h1>
+    
+    <form 
+        hx-post="{% if profile %}/api/profiles/{{ profile.id }}{% else %}/api/profiles{% endif %}"
+        hx-target="#notification-area"
+        hx-swap="beforeend"
+        class="card"
+        style="padding: var(--space-6);">
+        <div style="margin-bottom: var(--space-4);">
+            <label style="display: block; font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-secondary); margin-bottom: var(--space-2);">
+                Profile Name
+            </label>
+            <input 
+                type="text" 
+                name="name" 
+                value="{% if profile %}{{ profile.name }}{% endif %}"
+                class="input"
+                required>
+        </div>
+        
+        <div style="margin-bottom: var(--space-4);">
+            <label style="display: block; font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-secondary); margin-bottom: var(--space-2);">
+                Description
+            </label>
+            <textarea 
+                name="description" 
+                class="input"
+                rows="3">{% if profile %}{{ profile.description }}{% endif %}</textarea>
+        </div>
+        
+        <div style="display: flex; gap: var(--space-2);">
+            <button type="submit" class="btn btn-primary">
+                Save
+            </button>
+            <a href="/profiles" class="btn btn-secondary">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

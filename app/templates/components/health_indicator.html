@@ -1,0 +1,19 @@
+<div style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-md);">
+    <div style="font-size: var(--text-lg);">
+        {% if status == 'ok' %}✅
+        {% elif status == 'warning' %}⚠️
+        {% elif status == 'error' %}🔴
+        {% else %}ℹ️
+        {% endif %}
+    </div>
+    <div>
+        <div style="color: var(--text-primary); font-size: var(--text-sm);">
+            {{ label }}
+        </div>
+        {% if description %}
+        <div style="color: var(--text-secondary); font-size: var(--text-xs);">
+            {{ description }}
+        </div>
+        {% endif %}
+    </div>
+</div>
