@@ -1,0 +1,73 @@
+<!-- Step 3: Installation Progress -->
+<div class="wizard-step" data-current-step="3">
+    <div style="text-align: center; margin-bottom: var(--space-6);">
+        <i data-lucide="download" style="width: 48px; height: 48px; color: var(--accent-primary); margin-bottom: var(--space-4);"></i>
+        <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-2);">
+            Installing Frameworks
+        </h2>
+        <p style="color: var(--text-secondary);">Please wait while we set up your modding environment...</p>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+        <div id="progress-bar-fill" class="progress-bar-fill" style="width: {{ progress_percent|default(0) }}%;"></div>
+    </div>
+    
+    <!-- Current Step -->
+    <div id="current-step-info" style="text-align: center; margin-bottom: var(--space-6);">
+        <div style="font-weight: var(--font-semibold); color: var(--text-primary);">
+            {{ current_message|default('Starting...') }}
+        </div>
+        <div style="font-size: var(--text-sm); color: var(--text-tertiary);">
+            Step {{ current_step|default(1) }} of {{ total_steps|default(5) }}
+        </div>
+    </div>
+    
+    <!-- Installation Log -->
+    <div class="install-log" id="install-log">
+        {% for entry in log_entries|default([]) %}
+        <div class="install-log-entry {% if entry.type == 'success' %}success{% elif entry.type == 'error' %}error{% endif %}">
+            {{ entry.message }}
+        </div>
+        {% endfor %}
+        {% if not log_entries %}
+        <div class="install-log-entry">Initializing setup...</div>
+        {% endif %}
+    </div>
+    
+    <!-- Auto-refresh for progress -->
+    <div 
+        id="progress-updater"
+        hx-get="/api/setup/progress"
+        hx-trigger="every 1s"
+        hx-target="#wizard-content"
+        hx-swap="innerHTML"
+        style="display: none;">
+    </div>
+    
+    <!-- Cancel Button (only during install) -->
+    {% if not is_complete %}
+    <div style="text-align: center; margin-top: var(--space-6);">
+        <button 
+            class="btn btn-ghost"
+            hx-post="/api/setup/cancel"
+            hx-target="#wizard-content"
+            hx-swap="innerHTML"
+            style="color: var(--text-tertiary);">
+            Cancel Installation
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Scroll log to bottom
+    const logElement = document.getElementById('install-log');
+    if (logElement) {
+        logElement.scrollTop = logElement.scrollHeight;
+    }
+    
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+</script>

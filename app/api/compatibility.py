@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Form
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from app.database import get_db
 from app.models.mod import Mod
 from app.core.compatibility import CompatibilityChecker
@@ -9,10 +11,11 @@ from app.core.dependency_resolver import DependencyResolver
 from app.core.conflict_detector import ConflictDetector
 from app.core.game_detector import detect_cyberpunk_installations
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 from pathlib import Path
 
 router = APIRouter()
+templates = Jinja2Templates(directory="app/templates")
 
 
 class CompatibilityCheckResponse(BaseModel):
@@ -21,11 +24,18 @@ class CompatibilityCheckResponse(BaseModel):
     reason: str
     has_reds_files: bool = False
     has_dll_files: bool = False
-    has_archivexl_refs: bool = False
-    has_codeware_refs: bool = False
-    has_red4ext_refs: bool = False
-    has_cet_refs: bool = False
+    has_dylib_files: bool = False  # macOS native libraries
+    has_archivexl_refs: bool = False  # Now COMPATIBLE (ported to macOS)
+    has_codeware_refs: bool = False   # INCOMPATIBLE (no macOS port)
+    has_red4ext_refs: bool = False    # Now COMPATIBLE (ported to macOS)
+    has_cet_refs: bool = False        # INCOMPATIBLE (no macOS port)
+    has_tweakxl_refs: bool = False    # Now COMPATIBLE (ported to macOS)
+    modifies_executable: bool = False
+    has_r6_scripts_only: bool = False
+    has_red4ext_plugin: bool = False  # Native RED4ext plugin (.dylib)
+    has_tweak_files: bool = False     # TweakXL .yaml/.yml files
     incompatible_dependencies: List[str] = []
+    ported_dependencies: List[str] = []  # macOS-ported dependencies
 
 
 @router.get("/check/{mod_id}")
@@ -79,56 +89,97 @@ async def scan_all_mods(db: AsyncSession = Depends(get_db)) -> List[Compatibilit
     return results
 
 
-@router.get("/conflicts")
-async def get_conflicts(
+@router.get("/conflicts", response_class=HTMLResponse)
+async def get_conflicts_html(
+    request: Request,
     mod_id: int = None,
     db: AsyncSession = Depends(get_db)
 ):
-    """Get mod conflicts"""
+    """Get mod conflicts as HTML list"""
     installations = await detect_cyberpunk_installations()
-    if not installations:
-        raise HTTPException(status_code=404, detail="Cyberpunk 2077 not found")
-    
-    game_path = Path(installations[0]["path"])
+    game_path = Path(installations[0]["path"]) if installations else Path(".")
     detector = ConflictDetector(db, game_path)
     
-    conflicts = await detector.detect_conflicts(mod_id=mod_id)
+    # Trigger detection first to ensure DB is up to date
+    new_conflicts = await detector.detect_conflicts(mod_id=mod_id)
+    await detector.save_conflicts_to_db(new_conflicts)
     
-    # Save to database
-    await detector.save_conflicts_to_db(conflicts)
+    # Fetch unresolved conflicts with mod names
+    from app.models.compatibility import ModConflict
+    from sqlalchemy.orm import aliased
+    Mod1 = aliased(Mod)
+    Mod2 = aliased(Mod)
     
-    return {
-        "conflicts": [
+    query = select(ModConflict, Mod1.name.label("mod_name_1"), Mod2.name.label("mod_name_2"))\
+        .join(Mod1, ModConflict.mod_id_1 == Mod1.id)\
+        .join(Mod2, ModConflict.mod_id_2 == Mod2.id)\
+        .where(ModConflict.resolved == False)
+        
+    if mod_id:
+        query = query.where((ModConflict.mod_id_1 == mod_id) | (ModConflict.mod_id_2 == mod_id))
+        
+    result = await db.execute(query)
+    conflicts = result.all()
+    
+    conflicts_data = [
             {
-                "file_path": c.file_path,
-                "mod_id_1": c.mod_id_1,
-                "mod_id_2": c.mod_id_2,
-                "conflict_type": c.conflict_type.value,
-                "severity": c.severity.value,
-                "description": c.description
+            "id": c.ModConflict.id,
+            "file_path": c.ModConflict.file_path,
+            "mod_name_1": c.mod_name_1,
+            "mod_name_2": c.mod_name_2,
+            "conflict_type": c.ModConflict.conflict_type,
+            "severity": c.ModConflict.severity,
+            "detected_at": c.ModConflict.detected_at.strftime("%Y-%m-%d %H:%M") if c.ModConflict.detected_at else "Unknown"
             }
             for c in conflicts
         ]
-    }
+    
+    return templates.TemplateResponse("components/conflict_list.html", {
+        "request": request,
+        "conflicts": conflicts_data
+    })
 
 
-@router.post("/conflicts/{conflict_id}/resolve")
-async def resolve_conflict(
+@router.get("/conflicts/{conflict_id}", response_class=HTMLResponse)
+async def get_conflict_detail(
     conflict_id: int,
-    resolution_method: str,
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
-    """Resolve a conflict"""
+    """Get detail for a specific conflict"""
     installations = await detect_cyberpunk_installations()
-    if not installations:
-        raise HTTPException(status_code=404, detail="Cyberpunk 2077 not found")
-    
-    game_path = Path(installations[0]["path"])
+    game_path = Path(installations[0]["path"]) if installations else Path(".")
     detector = ConflictDetector(db, game_path)
     
-    await detector.resolve_conflict(conflict_id, resolution_method)
+    details = await detector.get_conflict_details(conflict_id)
+    if not details:
+        raise HTTPException(status_code=404, detail="Conflict not found")
+        
+    return templates.TemplateResponse("conflicts/resolve_modal.html", {
+        "request": request,
+        "conflict": details
+    })
+
+
+@router.post("/conflicts/resolve", response_class=HTMLResponse)
+async def resolve_conflict_html(
+    request: Request,
+    conflict_id: int = Form(...),
+    winning_mod_id: int = Form(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """Resolve a conflict via HTML form"""
+    installations = await detect_cyberpunk_installations()
+    game_path = Path(installations[0]["path"]) if installations else Path(".")
+    detector = ConflictDetector(db, game_path)
     
-    return {"message": "Conflict resolved"}
+    await detector.resolve_conflict(conflict_id, f"mod_{winning_mod_id}_wins")
+    
+    return templates.TemplateResponse("components/toast.html", {
+        "request": request,
+        "message": "Conflict resolved successfully",
+        "type": "success"
+    })
 
 
 @router.get("/dependencies")

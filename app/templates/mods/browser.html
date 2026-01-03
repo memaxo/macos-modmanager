@@ -6,7 +6,8 @@
         <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary);">
             Mods
         </h1>
-        <a href="/mods/install" class="btn btn-primary">
+        <a href="/mods/install" class="btn btn-primary" style="gap: var(--space-2);">
+            <i data-lucide="plus-circle" style="width: 1.1rem; height: 1.1rem;"></i>
             Install Mod
         </a>
     </div>
@@ -44,23 +45,25 @@
                 id="view-grid"
                 class="btn btn-secondary"
                 onclick="setView('grid')"
-                style="padding: var(--space-2);">
-                ⊞ Grid
+                style="padding: var(--space-2) var(--space-3); gap: var(--space-2);">
+                <i data-lucide="layout-grid" style="width: 1.1rem; height: 1.1rem;"></i>
+                Grid
             </button>
             <button 
                 id="view-list"
                 class="btn btn-secondary"
                 onclick="setView('list')"
-                style="padding: var(--space-2);">
-                ☰ List
+                style="padding: var(--space-2) var(--space-3); gap: var(--space-2);">
+                <i data-lucide="list" style="width: 1.1rem; height: 1.1rem;"></i>
+                List
             </button>
         </div>
     </div>
     
     <!-- Filters Sidebar and Mod List -->
-    <div style="display: flex; gap: var(--space-6);">
+    <div class="browser-layout">
         <!-- Filter Sidebar -->
-        <aside id="filter-sidebar" style="width: 16rem; flex-shrink: 0;">
+        <aside id="filter-sidebar" class="browser-sidebar">
             {% include "components/filter_sidebar.html" %}
         </aside>
         
@@ -97,6 +100,34 @@
         </div>
     </div>
 </div>
+
+<style>
+    .browser-layout {
+        display: flex;
+        gap: var(--space-6);
+    }
+
+    .browser-sidebar {
+        width: 16rem;
+        flex-shrink: 0;
+    }
+
+    @media (max-width: 1024px) {
+        .browser-sidebar {
+            width: 14rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .browser-layout {
+            flex-direction: column;
+        }
+        
+        .browser-sidebar {
+            width: 100%;
+        }
+    }
+</style>
 
 <script src="/static/js/mod_browser.js"></script>
 {% endblock %}

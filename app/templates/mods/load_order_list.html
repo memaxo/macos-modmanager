@@ -1,14 +1,29 @@
-{% if mods %}
-<div style="display: flex; flex-direction: column; gap: var(--space-2);">
+<div style="display: flex; flex-direction: column; gap: var(--space-2);" id="load-order-container">
     {% for mod in mods %}
-    {% include "components/load_order_item.html" with context %}
-    {% set priority = loop.index %}
-    {% set conflicts = [] %}
-    {% include "components/load_order_item.html" %}
+    <div class="load-order-item" data-mod-id="{{ mod.id }}" style="display: flex; align-items: center; gap: var(--space-4); padding: var(--space-3) var(--space-4); background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-md);">
+        <div class="drag-handle" style="cursor: grab; color: var(--text-secondary); user-select: none;">
+            ⣿
+        </div>
+        <div class="priority-number" style="min-width: 2rem; font-weight: var(--font-bold); color: var(--accent-primary);">
+            {{ mod.priority }}
+        </div>
+        <div style="flex-grow: 1;">
+            <div style="font-weight: var(--font-medium);">{{ mod.name }}</div>
+            <div style="font-size: var(--text-xs); color: var(--text-secondary);">v{{ mod.version }}</div>
+        </div>
+        <div>
+            <span class="badge badge-info" style="font-size: var(--text-xs);">Active</span>
+        </div>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: var(--space-12); color: var(--text-secondary);">
+        No mods in load order. Enable some mods first.
+    </div>
     {% endfor %}
 </div>
-{% else %}
-<div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
-    No mods in load order
-</div>
-{% endif %}
+
+<script>
+    if (typeof initializeSortable === 'function') {
+        initializeSortable();
+    }
+</script>

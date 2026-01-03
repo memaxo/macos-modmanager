@@ -1,0 +1,506 @@
+{% extends "base.html" %}
+
+{% block title %}Settings Optimizer - Cyberpunk 2077 macOS Mod Manager{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --opt-primary: #ff6b35;
+        --opt-success: #00d4aa;
+        --opt-warning: #ffa500;
+        --opt-info: #3b82f6;
+        --opt-bg: #0a0e14;
+        --opt-card: #141a22;
+        --opt-border: #1e2832;
+    }
+    
+    .optimizer-container {
+        background: var(--opt-bg);
+        min-height: 100vh;
+        padding: 2rem;
+    }
+    
+    .optimizer-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--opt-border);
+    }
+    
+    .optimizer-title {
+        font-family: 'Orbitron', 'Rajdhani', sans-serif;
+        font-size: 2rem;
+        color: var(--opt-primary);
+        letter-spacing: 3px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .optimizer-subtitle {
+        color: #6b7c8a;
+        font-size: 1rem;
+    }
+    
+    .hardware-card {
+        background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 107, 53, 0.05) 100%);
+        border: 1px solid rgba(255, 107, 53, 0.3);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .hardware-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .hardware-model {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 0.5rem;
+    }
+    
+    .hardware-specs {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        color: #9ca3af;
+    }
+    
+    .hardware-spec {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .hardware-spec-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--opt-primary);
+    }
+    
+    .hardware-spec-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .profiles-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .profile-card {
+        background: var(--opt-card);
+        border: 1px solid var(--opt-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .profile-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--opt-primary);
+        box-shadow: 0 8px 30px rgba(255, 107, 53, 0.2);
+    }
+    
+    .profile-card.recommended {
+        border-color: var(--opt-success);
+    }
+    
+    .profile-card.recommended::before {
+        content: '★ RECOMMENDED';
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: var(--opt-success);
+        color: #0a0e14;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.3rem 0.8rem;
+        border-radius: 0 12px 0 8px;
+    }
+    
+    .profile-name {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 0.75rem;
+    }
+    
+    .profile-stats {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .profile-stat {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .profile-stat-value {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--opt-primary);
+    }
+    
+    .profile-stat-label {
+        font-size: 0.75rem;
+        color: #6b7c8a;
+        text-transform: uppercase;
+    }
+    
+    .profile-features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .feature-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        color: #9ca3af;
+    }
+    
+    .feature-badge.enabled {
+        background: rgba(0, 212, 170, 0.2);
+        color: var(--opt-success);
+    }
+    
+    .feature-badge.disabled {
+        background: rgba(255, 71, 87, 0.2);
+        color: #ff4757;
+    }
+    
+    .insights-section {
+        background: var(--opt-card);
+        border: 1px solid var(--opt-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .insight-card {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border-left: 3px solid;
+    }
+    
+    .insight-card.high {
+        border-color: #ff4757;
+    }
+    
+    .insight-card.medium {
+        border-color: var(--opt-warning);
+    }
+    
+    .insight-card.low {
+        border-color: var(--opt-success);
+    }
+    
+    .insight-card.unknown {
+        border-color: var(--opt-info);
+    }
+    
+    .insight-title {
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 0.5rem;
+    }
+    
+    .insight-finding {
+        font-size: 0.9rem;
+        color: #9ca3af;
+        margin-bottom: 0.5rem;
+    }
+    
+    .insight-recommendation {
+        font-size: 0.9rem;
+        color: var(--opt-success);
+    }
+    
+    .insight-impact {
+        font-size: 0.8rem;
+        color: #6b7c8a;
+        margin-top: 0.5rem;
+    }
+    
+    .tips-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    
+    .tip-card {
+        background: var(--opt-card);
+        border: 1px solid var(--opt-border);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    
+    .tip-card.high {
+        border-left: 3px solid #ff4757;
+    }
+    
+    .tip-card.medium {
+        border-left: 3px solid var(--opt-warning);
+    }
+    
+    .tip-card.low {
+        border-left: 3px solid var(--opt-success);
+    }
+    
+    .tip-card.info {
+        border-left: 3px solid var(--opt-info);
+    }
+    
+    .tip-text {
+        font-weight: 500;
+        color: #fff;
+        margin-bottom: 0.5rem;
+    }
+    
+    .tip-reason {
+        font-size: 0.85rem;
+        color: #6b7c8a;
+    }
+    
+    .apply-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--opt-primary);
+        color: #fff;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: 1rem;
+    }
+    
+    .apply-btn:hover {
+        background: #ff8c5a;
+        transform: translateY(-2px);
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7c8a;
+    }
+    
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--opt-border);
+        border-top-color: var(--opt-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="optimizer-container">
+    <!-- Header -->
+    <div class="optimizer-header">
+        <h1 class="optimizer-title">🎮 SETTINGS OPTIMIZER</h1>
+        <p class="optimizer-subtitle">
+            Optimized configurations based on your hardware and binary analysis
+        </p>
+    </div>
+    
+    <!-- Loading State -->
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+        <p>Detecting hardware and generating recommendations...</p>
+    </div>
+    
+    <!-- Content (hidden until loaded) -->
+    <div id="content" style="display: none;">
+        <!-- Hardware Info -->
+        <div class="hardware-card" id="hardware-card">
+            <div class="hardware-icon">💻</div>
+            <div class="hardware-model" id="hardware-model">Detecting...</div>
+            <div class="hardware-specs">
+                <div class="hardware-spec">
+                    <span class="hardware-spec-value" id="gpu-cores">--</span>
+                    <span class="hardware-spec-label">GPU Cores</span>
+                </div>
+                <div class="hardware-spec">
+                    <span class="hardware-spec-value" id="memory-gb">--</span>
+                    <span class="hardware-spec-label">GB Memory</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Tips -->
+        <div class="insights-section">
+            <h2 class="section-title">⚡ Quick Optimization Tips</h2>
+            <div class="tips-grid" id="tips-grid">
+                <!-- Tips loaded dynamically -->
+            </div>
+        </div>
+        
+        <!-- Profiles -->
+        <h2 class="section-title" style="margin-bottom: 1rem;">
+            🎯 Recommended Profiles for Your Hardware
+        </h2>
+        <div class="profiles-grid" id="profiles-grid">
+            <!-- Profiles loaded dynamically -->
+        </div>
+        
+        <!-- Binary Analysis Insights -->
+        <div class="insights-section">
+            <h2 class="section-title">🔬 Binary Analysis Insights</h2>
+            <div id="insights-list">
+                <!-- Insights loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', loadOptimizer);
+
+async function loadOptimizer() {
+    try {
+        // Load hardware info
+        const hardwareRes = await fetch('/api/optimizer/hardware');
+        const hardware = await hardwareRes.json();
+        
+        // Load tips
+        const tipsRes = await fetch('/api/optimizer/quick-tips');
+        const tipsData = await tipsRes.json();
+        
+        // Load full report
+        const reportRes = await fetch('/api/optimizer/report');
+        const report = await reportRes.json();
+        
+        // Display hardware
+        document.getElementById('hardware-model').textContent = hardware.model_display;
+        document.getElementById('gpu-cores').textContent = hardware.gpu_cores;
+        document.getElementById('memory-gb').textContent = hardware.memory_gb;
+        
+        // Display tips
+        const tipsGrid = document.getElementById('tips-grid');
+        tipsGrid.innerHTML = tipsData.tips.map(tip => `
+            <div class="tip-card ${tip.priority}">
+                <div class="tip-text">${tip.tip}</div>
+                <div class="tip-reason">${tip.reason}</div>
+            </div>
+        `).join('');
+        
+        // Display profiles
+        const profilesGrid = document.getElementById('profiles-grid');
+        profilesGrid.innerHTML = report.profiles.map((profile, i) => `
+            <div class="profile-card ${i === 1 ? 'recommended' : ''}" onclick="selectProfile(${i})">
+                <div class="profile-name">${profile.metadata.profile_name}</div>
+                <div class="profile-stats">
+                    <div class="profile-stat">
+                        <span class="profile-stat-value">${profile.metadata.estimated_fps}</span>
+                        <span class="profile-stat-label">Est. FPS</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span class="profile-stat-value">${profile.metadata.visual_quality}</span>
+                        <span class="profile-stat-label">Quality</span>
+                    </div>
+                </div>
+                <div class="profile-features">
+                    <span class="feature-badge">${profile.upscaling.type.toUpperCase()}</span>
+                    <span class="feature-badge ${profile.ray_tracing.enabled ? 'enabled' : 'disabled'}">
+                        RT ${profile.ray_tracing.enabled ? 'ON' : 'OFF'}
+                    </span>
+                    ${profile.upscaling.frame_generation ? '<span class="feature-badge enabled">Frame Gen</span>' : ''}
+                    ${profile.ray_tracing.reflections ? '<span class="feature-badge enabled">Reflections</span>' : ''}
+                    ${profile.ray_tracing.shadows_global ? '<span class="feature-badge enabled">RT Shadows</span>' : ''}
+                </div>
+                <button class="apply-btn" onclick="event.stopPropagation(); applyProfile(${i})">
+                    Apply Settings
+                </button>
+            </div>
+        `).join('');
+        
+        // Store profiles for later
+        window.profiles = report.profiles;
+        
+        // Display insights
+        const insightsList = document.getElementById('insights-list');
+        insightsList.innerHTML = report.insights.map(insight => `
+            <div class="insight-card ${insight.impact.toLowerCase().includes('high') ? 'high' : insight.impact.toLowerCase().includes('medium') ? 'medium' : insight.impact.toLowerCase().includes('unknown') ? 'unknown' : 'low'}">
+                <div class="insight-title">${insight.title}</div>
+                <div class="insight-finding">${insight.finding}</div>
+                <div class="insight-recommendation">💡 ${insight.recommendation}</div>
+                <div class="insight-impact">Impact: ${insight.impact}</div>
+            </div>
+        `).join('');
+        
+        // Show content
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+        
+    } catch (e) {
+        document.getElementById('loading').innerHTML = `
+            <p style="color: #ff4757;">Error loading optimizer: ${e.message}</p>
+            <button onclick="loadOptimizer()" style="margin-top: 1rem; padding: 0.5rem 1rem; cursor: pointer;">
+                Retry
+            </button>
+        `;
+    }
+}
+
+function selectProfile(index) {
+    // Highlight selected profile
+    document.querySelectorAll('.profile-card').forEach((card, i) => {
+        card.style.borderColor = i === index ? 'var(--opt-primary)' : '';
+    });
+}
+
+async function applyProfile(index) {
+    const profile = window.profiles[index];
+    
+    // Show confirmation
+    const confirmed = confirm(`Apply "${profile.metadata.profile_name}" settings?\n\nEstimated FPS: ${profile.metadata.estimated_fps}\nVisual Quality: ${profile.metadata.visual_quality}`);
+    
+    if (!confirmed) return;
+    
+    // TODO: Implement actual settings application
+    // This would require integration with game config files
+    alert(`Profile "${profile.metadata.profile_name}" settings:\n\n` +
+          `Upscaling: ${profile.upscaling.type} (Quality ${profile.upscaling.quality})\n` +
+          `Ray Tracing: ${profile.ray_tracing.enabled ? 'Enabled' : 'Disabled'}\n` +
+          `RT Reflections: ${profile.ray_tracing.reflections ? 'On' : 'Off'}\n` +
+          `RT Shadows: ${profile.ray_tracing.shadows_global ? 'On' : 'Off'}\n` +
+          `Frame Generation: ${profile.upscaling.frame_generation ? 'On' : 'Off'}\n\n` +
+          `Note: Apply these settings in-game for now.`);
+}
+</script>
+{% endblock %}

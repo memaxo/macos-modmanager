@@ -1,0 +1,119 @@
+<!-- FOMOD Wizard Summary -->
+<div style="height: 100%; display: flex; flex-direction: column;">
+    
+    <!-- Summary Header -->
+    <div style="margin-bottom: var(--space-5);">
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2);">
+            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover)); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="clipboard-check" style="width: 1.5rem; height: 1.5rem; color: var(--bg-primary);"></i>
+            </div>
+            <div>
+                <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary);">
+                    Review Installation
+                </h3>
+                <p style="color: var(--text-secondary); font-size: var(--text-sm);">
+                    Confirm your selections before installing
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mod Info Card -->
+    <div style="background: var(--bg-primary); border-radius: var(--radius-lg); border: 1px solid var(--border-primary); padding: var(--space-4); margin-bottom: var(--space-5);">
+        <div style="display: flex; align-items: center; gap: var(--space-3);">
+            {% if mod_info.get('thumbnail_url') %}
+            <img src="{{ mod_info.thumbnail_url }}" 
+                 alt="{{ mod_info.name }}"
+                 style="width: 64px; height: 64px; object-fit: cover; border-radius: var(--radius-md);">
+            {% else %}
+            <div style="width: 64px; height: 64px; background: var(--bg-tertiary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="package" style="width: 1.5rem; height: 1.5rem; color: var(--text-tertiary);"></i>
+            </div>
+            {% endif %}
+            <div style="flex: 1;">
+                <h4 style="font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--text-primary);">
+                    {{ summary.mod_name }}
+                </h4>
+                {% if mod_info.get('author') %}
+                <p style="font-size: var(--text-sm); color: var(--text-secondary);">
+                    by {{ mod_info.author }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Selected Options -->
+    <div style="flex: 1; overflow-y: auto;">
+        <h4 style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-3);">
+            Selected Options
+        </h4>
+        
+        {% if summary.steps %}
+        <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+            {% for step in summary.steps %}
+            <div style="background: var(--bg-primary); border-radius: var(--radius-lg); border: 1px solid var(--border-primary); overflow: hidden;">
+                <div style="padding: var(--space-3) var(--space-4); background: var(--bg-tertiary); border-bottom: 1px solid var(--border-primary);">
+                    <h5 style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-primary);">
+                        {{ step.name }}
+                    </h5>
+                </div>
+                <div style="padding: var(--space-3) var(--space-4);">
+                    {% for group in step.groups %}
+                    <div style="{% if not loop.last %}margin-bottom: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--border-primary);{% endif %}">
+                        <p style="font-size: var(--text-xs); color: var(--text-tertiary); margin-bottom: var(--space-1);">
+                            {{ group.name }}
+                        </p>
+                        <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+                            {% for selection in group.selections %}
+                            <span style="font-size: var(--text-sm); color: var(--accent-primary); background: rgba(72, 61, 139, 0.15); padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: var(--space-1);">
+                                <i data-lucide="check" style="width: 0.75rem; height: 0.75rem;"></i>
+                                {{ selection }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="background: var(--bg-primary); border-radius: var(--radius-lg); border: 1px solid var(--border-primary); padding: var(--space-6); text-align: center;">
+            <i data-lucide="settings" style="width: 2rem; height: 2rem; color: var(--text-tertiary); margin-bottom: var(--space-2);"></i>
+            <p style="color: var(--text-secondary); font-size: var(--text-sm);">
+                Default installation options will be used
+            </p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Action Buttons -->
+    <div style="padding-top: var(--space-5); border-top: 1px solid var(--border-primary); margin-top: var(--space-5); display: flex; justify-content: space-between; align-items: center;">
+        <button type="button"
+                hx-get="/api/fomod/wizard/{{ session_id }}/step/0"
+                hx-target="#fomod-step-content"
+                hx-swap="innerHTML"
+                class="btn btn-secondary"
+                style="gap: var(--space-2);">
+            <i data-lucide="chevron-left" style="width: 1rem; height: 1rem;"></i>
+            Edit Choices
+        </button>
+        
+        <button type="button"
+                hx-post="/api/fomod/wizard/{{ session_id }}/complete"
+                hx-target="#fomod-wizard-container"
+                hx-swap="innerHTML"
+                class="btn btn-primary"
+                style="gap: var(--space-2);">
+            <i data-lucide="download" style="width: 1rem; height: 1rem;"></i>
+            Install Mod
+        </button>
+    </div>
+</div>
+
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

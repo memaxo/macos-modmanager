@@ -34,5 +34,6 @@ class CollectionMod(Base):
     mod_id = Column(Integer, ForeignKey("mods.id", ondelete="SET NULL"), nullable=True)
     is_required = Column(Boolean, default=True)
     install_order = Column(Integer, nullable=True)
+    installer_choices = Column(JSON, nullable=True)  # Pre-saved FOMOD choices from collection curator
     
     collection = relationship("Collection", back_populates="mods")

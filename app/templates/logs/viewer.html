@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6);">
+        <div>
+            <h1 style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-1);">
+                Log Viewer
+            </h1>
+            <p style="color: var(--text-secondary);">Real-time mod loading and error logs</p>
+        </div>
+        <div style="display: flex; gap: var(--space-2);">
+            <button class="btn btn-secondary" onclick="exportLogs()">
+                <i data-lucide="download" style="width: 1rem; height: 1rem;"></i>
+                Export
+            </button>
+            <button class="btn btn-secondary" onclick="clearLogs()">
+                <i data-lucide="trash-2" style="width: 1rem; height: 1rem;"></i>
+                Clear
+            </button>
+            <button id="stream-toggle" class="btn btn-primary" onclick="toggleStreaming()">
+                <i data-lucide="play" style="width: 1rem; height: 1rem;"></i>
+                Start Live
+            </button>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="card" style="padding: var(--space-4); margin-bottom: var(--space-4);">
+        <div style="display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: center;">
+            <!-- Level filter -->
+            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                <span style="font-size: var(--text-sm); color: var(--text-secondary);">Level:</span>
+                <select id="filter-level" class="form-select" onchange="applyFilters()">
+                    <option value="">All</option>
+                    <option value="error">Errors</option>
+                    <option value="warning">Warnings</option>
+                    <option value="info">Info</option>
+                    <option value="debug">Debug</option>
+                </select>
+            </div>
+            
+            <!-- Source filter -->
+            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                <span style="font-size: var(--text-sm); color: var(--text-secondary);">Source:</span>
+                <select id="filter-source" class="form-select" onchange="applyFilters()">
+                    <option value="">All</option>
+                    <option value="red4ext">RED4ext</option>
+                    <option value="tweakxl">TweakXL</option>
+                    <option value="archivexl">ArchiveXL</option>
+                    <option value="redscript">Redscript</option>
+                </select>
+            </div>
+            
+            <!-- Search -->
+            <div style="flex: 1; min-width: 200px;">
+                <input type="text" id="filter-search" class="form-input" placeholder="Search logs..." oninput="applyFilters()">
+            </div>
+            
+            <!-- Auto-scroll toggle -->
+            <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                <input type="checkbox" id="auto-scroll" checked>
+                <span style="font-size: var(--text-sm); color: var(--text-secondary);">Auto-scroll</span>
+            </label>
+        </div>
+    </div>
+    
+    <!-- Stats Bar -->
+    <div id="log-stats" class="card" style="padding: var(--space-3); margin-bottom: var(--space-4); display: flex; gap: var(--space-6);">
+        <div style="display: flex; align-items: center; gap: var(--space-2);">
+            <span style="font-size: var(--text-sm); color: var(--text-tertiary);">Total:</span>
+            <span id="stat-total" style="font-weight: var(--font-semibold); color: var(--text-primary);">0</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: var(--space-2);">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-error);"></span>
+            <span id="stat-errors" style="font-size: var(--text-sm); color: var(--accent-error);">0 errors</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: var(--space-2);">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-warning);"></span>
+            <span id="stat-warnings" style="font-size: var(--text-sm); color: var(--accent-warning);">0 warnings</span>
+        </div>
+        <div style="flex: 1;"></div>
+        <div id="stream-status" style="display: flex; align-items: center; gap: var(--space-2);">
+            <span class="status-indicator"></span>
+            <span style="font-size: var(--text-sm); color: var(--text-tertiary);">Stopped</span>
+        </div>
+    </div>
+    
+    <!-- Log Output -->
+    <div id="log-container" class="card" style="padding: 0; overflow: hidden;">
+        <div id="log-output" style="height: 500px; overflow-y: auto; font-family: var(--font-mono); font-size: var(--text-sm); background: var(--bg-primary);">
+            <div id="log-lines" style="padding: var(--space-2);">
+                <!-- Log lines will be inserted here -->
+                <div class="log-placeholder" style="text-align: center; padding: var(--space-8); color: var(--text-tertiary);">
+                    <i data-lucide="file-text" style="width: 48px; height: 48px; margin-bottom: var(--space-4);"></i>
+                    <p>No logs yet. Click "Start Live" to stream logs or load recent logs.</p>
+                    <button class="btn btn-secondary" style="margin-top: var(--space-4);" onclick="loadRecentLogs()">
+                        Load Recent Logs
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Error Summary Panel -->
+    <div id="error-summary" class="card" style="margin-top: var(--space-4); display: none;">
+        <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-3);">
+            Detected Issues
+        </h3>
+        <div id="error-list">
+            <!-- Error items will be inserted here -->
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-select, .form-input {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        padding: var(--space-2) var(--space-3);
+        color: var(--text-primary);
+        font-size: var(--text-sm);
+    }
+    
+    .form-input {
+        width: 100%;
+    }
+    
+    .log-line {
+        padding: var(--space-1) var(--space-2);
+        border-left: 3px solid transparent;
+        margin-bottom: 1px;
+    }
+    
+    .log-line:hover {
+        background: var(--bg-hover);
+    }
+    
+    .log-line.error {
+        border-left-color: var(--accent-error);
+        background: rgba(239, 68, 68, 0.1);
+    }
+    
+    .log-line.warning {
+        border-left-color: var(--accent-warning);
+        background: rgba(245, 158, 11, 0.1);
+    }
+    
+    .log-line.info {
+        border-left-color: var(--accent-info);
+    }
+    
+    .log-line.debug {
+        color: var(--text-tertiary);
+    }
+    
+    .log-timestamp {
+        color: var(--text-tertiary);
+        margin-right: var(--space-2);
+    }
+    
+    .log-source {
+        color: var(--accent-primary);
+        font-weight: var(--font-medium);
+        margin-right: var(--space-2);
+    }
+    
+    .log-level {
+        padding: 0 var(--space-1);
+        border-radius: var(--radius-sm);
+        font-size: var(--text-xs);
+        margin-right: var(--space-2);
+        text-transform: uppercase;
+    }
+    
+    .log-level.error {
+        background: var(--accent-error);
+        color: white;
+    }
+    
+    .log-level.warning {
+        background: var(--accent-warning);
+        color: black;
+    }
+    
+    .log-level.info {
+        background: var(--accent-info);
+        color: white;
+    }
+    
+    .log-level.debug {
+        background: var(--text-tertiary);
+        color: white;
+    }
+    
+    .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-tertiary);
+    }
+    
+    .status-indicator.streaming {
+        background: var(--accent-success);
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .error-item {
+        padding: var(--space-3);
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-2);
+        border-left: 3px solid var(--accent-error);
+    }
+    
+    .error-item.warning {
+        border-left-color: var(--accent-warning);
+    }
+</style>
+
+<script>
+    let isStreaming = false;
+    let eventSource = null;
+    let logLines = [];
+    let errorCount = 0;
+    let warningCount = 0;
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        lucide.createIcons();
+        loadRecentLogs();
+    });
+    
+    // Toggle streaming
+    function toggleStreaming() {
+        if (isStreaming) {
+            stopStreaming();
+        } else {
+            startStreaming();
+        }
+    }
+    
+    function startStreaming() {
+        if (eventSource) {
+            eventSource.close();
+        }
+        
+        const filters = getFilters();
+        let url = '/api/logs/stream?';
+        if (filters.level) url += `level=${filters.level}&`;
+        if (filters.source) url += `source=${filters.source}&`;
+        if (filters.search) url += `search=${encodeURIComponent(filters.search)}&`;
+        
+        eventSource = new EventSource(url);
+        
+        eventSource.onmessage = function(event) {
+            const line = JSON.parse(event.data);
+            addLogLine(line);
+        };
+        
+        eventSource.onerror = function() {
+            stopStreaming();
+        };
+        
+        isStreaming = true;
+        updateStreamUI();
+    }
+    
+    function stopStreaming() {
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
+        isStreaming = false;
+        updateStreamUI();
+    }
+    
+    function updateStreamUI() {
+        const btn = document.getElementById('stream-toggle');
+        const status = document.getElementById('stream-status');
+        const indicator = status.querySelector('.status-indicator');
+        const text = status.querySelector('span:last-child');
+        
+        if (isStreaming) {
+            btn.innerHTML = '<i data-lucide="pause" style="width: 1rem; height: 1rem;"></i> Stop';
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-secondary');
+            indicator.classList.add('streaming');
+            text.textContent = 'Streaming';
+        } else {
+            btn.innerHTML = '<i data-lucide="play" style="width: 1rem; height: 1rem;"></i> Start Live';
+            btn.classList.remove('btn-secondary');
+            btn.classList.add('btn-primary');
+            indicator.classList.remove('streaming');
+            text.textContent = 'Stopped';
+        }
+        lucide.createIcons();
+    }
+    
+    async function loadRecentLogs() {
+        try {
+            const response = await fetch('/api/logs/recent?lines=200');
+            const data = await response.json();
+            
+            // Clear existing
+            logLines = [];
+            errorCount = 0;
+            warningCount = 0;
+            
+            const container = document.getElementById('log-lines');
+            container.innerHTML = '';
+            
+            for (const line of data.lines) {
+                addLogLine(line, false);
+            }
+            
+            scrollToBottom();
+            updateStats();
+        } catch (error) {
+            console.error('Failed to load logs:', error);
+        }
+    }
+    
+    function addLogLine(line, scroll = true) {
+        const container = document.getElementById('log-lines');
+        
+        // Remove placeholder if present
+        const placeholder = container.querySelector('.log-placeholder');
+        if (placeholder) {
+            placeholder.remove();
+        }
+        
+        logLines.push(line);
+        
+        // Update counts
+        if (line.level === 'error') errorCount++;
+        if (line.level === 'warning') warningCount++;
+        
+        // Create line element
+        const el = document.createElement('div');
+        el.className = `log-line ${line.level}`;
+        el.innerHTML = `
+            <span class="log-timestamp">${formatTimestamp(line.timestamp)}</span>
+            <span class="log-source">[${line.source}]</span>
+            <span class="log-level ${line.level}">${line.level}</span>
+            <span class="log-message">${escapeHtml(line.message)}</span>
+        `;
+        
+        container.appendChild(el);
+        
+        // Auto-scroll if enabled
+        if (scroll && document.getElementById('auto-scroll').checked) {
+            scrollToBottom();
+        }
+        
+        updateStats();
+    }
+    
+    function scrollToBottom() {
+        const container = document.getElementById('log-output');
+        container.scrollTop = container.scrollHeight;
+    }
+    
+    function updateStats() {
+        document.getElementById('stat-total').textContent = logLines.length;
+        document.getElementById('stat-errors').textContent = `${errorCount} errors`;
+        document.getElementById('stat-warnings').textContent = `${warningCount} warnings`;
+    }
+    
+    function getFilters() {
+        return {
+            level: document.getElementById('filter-level').value,
+            source: document.getElementById('filter-source').value,
+            search: document.getElementById('filter-search').value
+        };
+    }
+    
+    function applyFilters() {
+        const filters = getFilters();
+        const container = document.getElementById('log-lines');
+        const lines = container.querySelectorAll('.log-line');
+        
+        lines.forEach(line => {
+            let show = true;
+            
+            if (filters.level && !line.classList.contains(filters.level)) {
+                show = false;
+            }
+            
+            if (filters.source) {
+                const source = line.querySelector('.log-source')?.textContent || '';
+                if (!source.toLowerCase().includes(filters.source.toLowerCase())) {
+                    show = false;
+                }
+            }
+            
+            if (filters.search) {
+                const text = line.textContent.toLowerCase();
+                if (!text.includes(filters.search.toLowerCase())) {
+                    show = false;
+                }
+            }
+            
+            line.style.display = show ? '' : 'none';
+        });
+        
+        // Restart streaming with new filters
+        if (isStreaming) {
+            startStreaming();
+        }
+    }
+    
+    async function clearLogs() {
+        if (!confirm('Clear all log files?')) return;
+        
+        try {
+            await fetch('/api/logs/clear', { method: 'DELETE' });
+            logLines = [];
+            errorCount = 0;
+            warningCount = 0;
+            document.getElementById('log-lines').innerHTML = `
+                <div class="log-placeholder" style="text-align: center; padding: var(--space-8); color: var(--text-tertiary);">
+                    <p>Logs cleared</p>
+                </div>
+            `;
+            updateStats();
+        } catch (error) {
+            console.error('Failed to clear logs:', error);
+        }
+    }
+    
+    async function exportLogs() {
+        try {
+            const response = await fetch('/api/logs/export', { method: 'POST' });
+            const data = await response.json();
+            
+            // Create download
+            const blob = new Blob([data.content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cyberpunk_logs_${new Date().toISOString().slice(0, 10)}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Failed to export logs:', error);
+        }
+    }
+    
+    function formatTimestamp(ts) {
+        const date = new Date(ts);
+        return date.toLocaleTimeString('en-US', { hour12: false });
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
 from app.config import settings
-from app.database import init_db, get_db
+from app.database import init_db, get_db, AsyncSessionLocal
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models.mod import Mod
@@ -16,6 +16,43 @@ templates = Jinja2Templates(directory="app/templates")
 async def lifespan(app: FastAPI):
     # Startup
     await init_db()
+    
+    # Load settings from database
+    async with AsyncSessionLocal() as db:
+        from app.models.settings import UserSetting
+        from app.utils.security import decrypt_value, is_encrypted
+        from sqlalchemy import select
+        result = await db.execute(select(UserSetting))
+        
+        db_settings = {}
+        for setting in result.scalars().all():
+            # Decrypt encrypted values (like API keys)
+            if setting.value_type == "encrypted":
+                try:
+                    db_settings[setting.key] = decrypt_value(setting.value)
+                except Exception:
+                    # If decryption fails, skip this setting
+                    continue
+            elif setting.key == "nexus_api_key" and is_encrypted(setting.value):
+                # Handle legacy encrypted values that don't have value_type set
+                try:
+                    db_settings[setting.key] = decrypt_value(setting.value)
+                    # Auto-migrate: update value_type to encrypted
+                    setting.value_type = "encrypted"
+                    await db.commit()
+                except Exception:
+                    # If decryption fails, treat as plaintext
+                    db_settings[setting.key] = setting.value
+            else:
+                db_settings[setting.key] = setting.value
+        
+        if "nexus_api_key" in db_settings:
+            settings.nexus_api_key = db_settings["nexus_api_key"]
+        if "auto_check_updates" in db_settings:
+            settings.auto_check_updates = db_settings["auto_check_updates"] == "True"
+        if "backup_before_install" in db_settings:
+            settings.backup_before_install = db_settings["backup_before_install"] == "True"
+            
     yield
     # Shutdown
     pass
@@ -31,15 +68,25 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Include routers
-from app.api import mods, collections, compatibility, games, profiles, dashboard, dependencies
+from app.api import mods, collections, compatibility, games, profiles, dashboard, dependencies, launcher, settings as api_settings, fomod, frameworks, setup, logs, compatibility_db, backups, profiler, optimizer
 
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
+app.include_router(profiler.router, tags=["profiler"])
+app.include_router(optimizer.router, tags=["optimizer"])
 app.include_router(mods.router, prefix="/api/mods", tags=["mods"])
 app.include_router(collections.router, prefix="/api/collections", tags=["collections"])
 app.include_router(compatibility.router, prefix="/api/compatibility", tags=["compatibility"])
+app.include_router(compatibility_db.router, prefix="/api/compatibility-db", tags=["compatibility-db"])
 app.include_router(games.router, prefix="/api/games", tags=["games"])
 app.include_router(profiles.router, prefix="/api/profiles", tags=["profiles"])
 app.include_router(dependencies.router, prefix="/api/dependencies", tags=["dependencies"])
+app.include_router(launcher.router, prefix="/api/launcher", tags=["launcher"])
+app.include_router(api_settings.router, prefix="/api/settings", tags=["settings"])
+app.include_router(fomod.router, prefix="/api/fomod", tags=["fomod"])
+app.include_router(frameworks.router, prefix="/api/frameworks", tags=["frameworks"])
+app.include_router(setup.router, prefix="/api/setup", tags=["setup"])
+app.include_router(logs.router, prefix="/api/logs", tags=["logs"])
+app.include_router(backups.router, prefix="/api/backups", tags=["backups"])
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -65,6 +112,12 @@ async def mods_browser_page(request: Request):
 async def mod_install_page(request: Request):
     """Mod installation page"""
     return templates.TemplateResponse("mods/install.html", {"request": request})
+
+
+@app.get("/mods/explore", response_class=HTMLResponse)
+async def mods_explore_page(request: Request):
+    """Explore Nexus mods page"""
+    return templates.TemplateResponse("mods/explore.html", {"request": request})
 
 
 @app.get("/collections", response_class=HTMLResponse)
@@ -107,7 +160,7 @@ async def collection_detail_page(request: Request, collection_id: int, db: Async
 @app.get("/mods/load-order", response_class=HTMLResponse)
 async def load_order_page(request: Request, db: AsyncSession = Depends(get_db)):
     """Load order manager page"""
-    from app.api.profiles import ProfileManager
+    from app.core.profile_manager import ProfileManager
     manager = ProfileManager(db)
     profiles = await manager.list_profiles()
     
@@ -141,7 +194,7 @@ async def profile_create_page(request: Request):
 @app.get("/profiles/{profile_id}/edit", response_class=HTMLResponse)
 async def profile_edit_page(request: Request, profile_id: int, db: AsyncSession = Depends(get_db)):
     """Edit profile page"""
-    from app.api.profiles import ProfileManager
+    from app.core.profile_manager import ProfileManager
     manager = ProfileManager(db)
     profile = await manager.get_profile(profile_id)
     
@@ -162,15 +215,53 @@ async def dependencies_page(request: Request):
 
 
 @app.get("/settings", response_class=HTMLResponse)
-async def settings_page(request: Request):
+async def settings_page(request: Request, db: AsyncSession = Depends(get_db)):
     """Settings page"""
-    return templates.TemplateResponse("settings.html", {"request": request})
+    from app.models.settings import UserSetting
+    result = await db.execute(select(UserSetting))
+    db_settings = {s.key: s.value for s in result.scalars().all()}
+    
+    return templates.TemplateResponse("settings.html", {
+        "request": request,
+        "db_settings": db_settings,
+        "config": settings
+    })
 
 
 @app.get("/activity", response_class=HTMLResponse)
 async def activity_page(request: Request):
     """Activity log page"""
     return templates.TemplateResponse("activity.html", {"request": request})
+
+
+@app.get("/setup", response_class=HTMLResponse)
+async def setup_page(request: Request):
+    """Setup wizard page"""
+    return templates.TemplateResponse("setup/wizard.html", {"request": request})
+
+
+@app.get("/logs", response_class=HTMLResponse)
+async def logs_page(request: Request):
+    """Log viewer page"""
+    return templates.TemplateResponse("logs/viewer.html", {"request": request})
+
+
+@app.get("/backups", response_class=HTMLResponse)
+async def backups_page(request: Request):
+    """Backup manager page"""
+    return templates.TemplateResponse("backups/manager.html", {"request": request})
+
+
+@app.get("/profiler", response_class=HTMLResponse)
+async def profiler_page(request: Request):
+    """GPU Performance Profiler page"""
+    return templates.TemplateResponse("profiler/dashboard.html", {"request": request})
+
+
+@app.get("/optimizer", response_class=HTMLResponse)
+async def optimizer_page(request: Request):
+    """Settings Optimizer page"""
+    return templates.TemplateResponse("optimizer/dashboard.html", {"request": request})
 
 
 @app.get("/mods/{mod_id}", response_class=HTMLResponse)
@@ -190,30 +281,4 @@ async def mod_detail_page(request: Request, mod_id: int, db: AsyncSession = Depe
         "request": request,
         "mod": mod,
         "active_tab": "overview"
-    })
-
-
-@app.get("/api/mods", response_class=HTMLResponse)
-async def mods_list_html(request: Request, db: AsyncSession = Depends(get_db)):
-    """HTMX endpoint for mod list"""
-    from app.database import get_db
-    from fastapi import Depends
-    
-    result = await db.execute(select(Mod).where(Mod.is_active == True))
-    mods = result.scalars().all()
-    
-    mods_data = [
-        {
-            "id": mod.id,
-            "name": mod.name,
-            "author": mod.author,
-            "version": mod.version,
-            "is_enabled": mod.is_enabled
-        }
-        for mod in mods
-    ]
-    
-    return templates.TemplateResponse("mods_list.html", {
-        "request": request,
-        "mods": mods_data
     })

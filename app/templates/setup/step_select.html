@@ -1,0 +1,110 @@
+<!-- Step 2: Framework Selection -->
+<div class="wizard-step" data-current-step="2">
+    <div style="text-align: center; margin-bottom: var(--space-6);">
+        <i data-lucide="package" style="width: 48px; height: 48px; color: var(--accent-primary); margin-bottom: var(--space-4);"></i>
+        <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-2);">
+            Select Frameworks to Install
+        </h2>
+        <p style="color: var(--text-secondary);">Choose which modding frameworks you want to install</p>
+    </div>
+    
+    <form id="setup-form" hx-post="/api/setup/start" hx-target="#wizard-content" hx-swap="innerHTML">
+        <!-- RED4ext (Required) -->
+        <label class="framework-option" style="border-color: var(--accent-primary);">
+            <input type="checkbox" name="install_red4ext" value="true" checked disabled>
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-1);">
+                    <span style="font-weight: var(--font-semibold); color: var(--text-primary);">RED4ext</span>
+                    <span class="badge badge-info" style="font-size: 10px;">Required</span>
+                </div>
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); margin: 0;">
+                    Core mod loader for Cyberpunk 2077. Enables native code mods and is required for all other frameworks.
+                </p>
+                <div style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-2);">
+                    <a href="https://github.com/memaxo/RED4ext-macos" target="_blank" style="color: var(--accent-info);">View on GitHub</a>
+                </div>
+            </div>
+        </label>
+        
+        <!-- TweakXL -->
+        <label class="framework-option">
+            <input type="checkbox" name="install_tweakxl" value="true" checked>
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-1);">
+                    <span style="font-weight: var(--font-semibold); color: var(--text-primary);">TweakXL</span>
+                    <span class="badge badge-success" style="font-size: 10px;">Recommended</span>
+                </div>
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); margin: 0;">
+                    TweakDB modification framework. Required for mods that modify game values, stats, and behaviors.
+                </p>
+                <div style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-2);">
+                    <a href="https://github.com/memaxo/cp2077-tweak-xl-macos" target="_blank" style="color: var(--accent-info);">View on GitHub</a>
+                </div>
+            </div>
+        </label>
+        
+        <!-- ArchiveXL -->
+        <label class="framework-option">
+            <input type="checkbox" name="install_archivexl" value="true" checked>
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-1);">
+                    <span style="font-weight: var(--font-semibold); color: var(--text-primary);">ArchiveXL</span>
+                    <span class="badge badge-success" style="font-size: 10px;">Recommended</span>
+                </div>
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); margin: 0;">
+                    Archive loading extension. Required for mods that add new items, appearances, and resources.
+                </p>
+                <div style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-2);">
+                    <a href="https://github.com/memaxo/cp2077-archive-xl-macos" target="_blank" style="color: var(--accent-info);">View on GitHub</a>
+                </div>
+            </div>
+        </label>
+        
+        <!-- Hidden field for game path -->
+        <input type="hidden" name="game_path" value="{{ game_path or '' }}">
+        <input type="hidden" name="create_launch_script" value="true">
+        
+        <!-- Info Box -->
+        <div style="margin-top: var(--space-4); padding: var(--space-4); background: var(--info-bg); border: 1px solid var(--info-border); border-radius: var(--radius-md);">
+            <div style="display: flex; align-items: flex-start; gap: var(--space-3);">
+                <i data-lucide="info" style="width: 20px; height: 20px; color: var(--accent-info); flex-shrink: 0; margin-top: 2px;"></i>
+                <div>
+                    <p style="font-size: var(--text-sm); color: var(--text-primary); margin: 0 0 var(--space-2) 0;">
+                        The setup will download frameworks from GitHub and configure your game for modding.
+                    </p>
+                    <p style="font-size: var(--text-xs); color: var(--text-secondary); margin: 0;">
+                        A launch script will be created to run the game with mods enabled.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: var(--space-3); margin-top: var(--space-6);">
+            <button 
+                type="button"
+                class="btn btn-secondary"
+                hx-get="/api/setup/detect"
+                hx-target="#wizard-content"
+                hx-swap="innerHTML"
+                onclick="updateProgressSteps(1)">
+                <i data-lucide="arrow-left" style="width: 1rem; height: 1rem; margin-right: var(--space-2);"></i>
+                Back
+            </button>
+            <button 
+                type="submit"
+                class="btn btn-primary" 
+                style="flex: 1; justify-content: center;"
+                onclick="updateProgressSteps(3)">
+                <i data-lucide="download" style="width: 1rem; height: 1rem; margin-right: var(--space-2);"></i>
+                Install Selected Frameworks
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+</script>

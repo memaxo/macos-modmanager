@@ -1,0 +1,636 @@
+<!-- Modern Download Queue Component -->
+<div class="queue-wrapper">
+    {% if queue %}
+    {% set active_count = queue.values()|selectattr('status', 'ne', 'completed')|selectattr('status', 'ne', 'failed')|list|length %}
+    {% set completed_count = queue.values()|selectattr('status', 'eq', 'completed')|list|length %}
+    {% set failed_count = queue.values()|selectattr('status', 'eq', 'failed')|list|length %}
+    
+    <!-- Queue Stats Header -->
+    <div class="queue-stats">
+        <div class="stat-item">
+            <span class="stat-value">{{ active_count }}</span>
+            <span class="stat-label">Active</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <span class="stat-value text-success">{{ completed_count }}</span>
+            <span class="stat-label">Done</span>
+        </div>
+        {% if failed_count > 0 %}
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <span class="stat-value text-error">{{ failed_count }}</span>
+            <span class="stat-label">Failed</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Active Downloads -->
+    <div class="queue-section">
+        {% for job_id, job in queue.items() %}
+        {% if job.status not in ['completed', 'failed'] %}
+        <div class="queue-item {{ 'downloading' if job.status == 'downloading' else 'processing' }}" data-job-id="{{ job_id }}">
+            <!-- Item Header -->
+            <div class="queue-item-header">
+                <div class="queue-item-info">
+                    <span class="queue-item-name">{{ job.name or 'Unknown Mod' }}</span>
+                    <span class="queue-item-status">
+                        {% if job.status == 'downloading' %}
+                        <i data-lucide="download-cloud" class="status-icon animate-pulse"></i>
+                        Downloading...
+                        {% elif job.status == 'extracting' %}
+                        <i data-lucide="archive" class="status-icon animate-spin"></i>
+                        Extracting...
+                        {% elif job.status == 'installing' %}
+                        <i data-lucide="hard-drive" class="status-icon animate-pulse"></i>
+                        Installing...
+                        {% elif job.status == 'verifying' %}
+                        <i data-lucide="check-circle" class="status-icon animate-pulse"></i>
+                        Verifying...
+                        {% elif job.status == 'queued' %}
+                        <i data-lucide="clock" class="status-icon"></i>
+                        Queued
+                        {% else %}
+                        <i data-lucide="loader-2" class="status-icon animate-spin"></i>
+                        {{ job.status|title }}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="queue-item-actions">
+                    {% if job.status == 'downloading' %}
+                    <button class="btn-icon" title="Pause" disabled>
+                        <i data-lucide="pause" style="width: 14px; height: 14px;"></i>
+                    </button>
+                    {% endif %}
+                    <button class="btn-icon btn-icon-danger" 
+                            title="Cancel"
+                            hx-delete="/api/mods/install/cancel/{{ job_id }}"
+                            hx-swap="none">
+                        <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="queue-progress-container">
+                <div class="queue-progress-bar">
+                    <div class="queue-progress-fill {{ 'animate-progress' if job.status == 'downloading' else '' }}" 
+                         style="width: {{ job.progress }}%;">
+                    </div>
+                    {% if job.status == 'downloading' %}
+                    <div class="queue-progress-glow" style="width: {{ job.progress }}%;"></div>
+                    {% endif %}
+                </div>
+                <div class="queue-progress-info">
+                    <span class="progress-percent">{{ job.progress }}%</span>
+                    {% if job.speed %}
+                    <span class="progress-speed">{{ job.speed }}</span>
+                    {% endif %}
+                    {% if job.eta %}
+                    <span class="progress-eta">ETA: {{ job.eta }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Stage Indicator -->
+            <div class="queue-stages">
+                <div class="stage {{ 'active' if job.status == 'downloading' else 'done' if job.progress >= 100 else '' }}">
+                    <div class="stage-dot"></div>
+                    <span>Download</span>
+                </div>
+                <div class="stage-connector {{ 'active' if job.status in ['extracting', 'installing', 'verifying'] else '' }}"></div>
+                <div class="stage {{ 'active' if job.status == 'extracting' else 'done' if job.status in ['installing', 'verifying'] else '' }}">
+                    <div class="stage-dot"></div>
+                    <span>Extract</span>
+                </div>
+                <div class="stage-connector {{ 'active' if job.status in ['installing', 'verifying'] else '' }}"></div>
+                <div class="stage {{ 'active' if job.status == 'installing' else 'done' if job.status == 'verifying' else '' }}">
+                    <div class="stage-dot"></div>
+                    <span>Install</span>
+                </div>
+                <div class="stage-connector {{ 'active' if job.status == 'verifying' else '' }}"></div>
+                <div class="stage {{ 'active' if job.status == 'verifying' else '' }}">
+                    <div class="stage-dot"></div>
+                    <span>Verify</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Completed Section (Collapsible) -->
+    {% if completed_count > 0 or failed_count > 0 %}
+    <details class="queue-completed-section" {% if active_count == 0 %}open{% endif %}>
+        <summary class="queue-section-header">
+            <i data-lucide="check-circle-2" style="width: 14px; height: 14px; color: var(--accent-success);"></i>
+            <span>Completed ({{ completed_count + failed_count }})</span>
+            <i data-lucide="chevron-down" class="chevron-icon" style="width: 14px; height: 14px;"></i>
+        </summary>
+        <div class="completed-items">
+            {% for job_id, job in queue.items() %}
+            {% if job.status == 'completed' %}
+            <div class="completed-item success">
+                <i data-lucide="check-circle" class="completed-icon" style="color: var(--accent-success);"></i>
+                <div class="completed-info">
+                    <span class="completed-name">{{ job.name }}</span>
+                    <span class="completed-time">Just now</span>
+                </div>
+            </div>
+            {% elif job.status == 'failed' %}
+            <div class="completed-item failed">
+                <i data-lucide="x-circle" class="completed-icon" style="color: var(--accent-error);"></i>
+                <div class="completed-info">
+                    <span class="completed-name">{{ job.name }}</span>
+                    <span class="completed-error">{{ job.error or 'Installation failed' }}</span>
+                </div>
+                <button class="btn-icon" title="Retry"
+                        hx-post="/api/mods/install/retry/{{ job_id }}"
+                        hx-swap="none">
+                    <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+                </button>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </details>
+    {% endif %}
+
+    <!-- Clear All Button -->
+    {% if completed_count > 0 %}
+    <div class="queue-footer">
+        <button class="btn btn-ghost btn-sm"
+                hx-delete="/api/mods/install/clear-completed"
+                hx-swap="none"
+                hx-on::after-request="htmx.trigger(document.body, 'queueUpdated')">
+            <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+            Clear Completed
+        </button>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <!-- Empty State -->
+    <div class="queue-empty">
+        <div class="queue-empty-icon">
+            <i data-lucide="inbox"></i>
+        </div>
+        <h4>No Active Tasks</h4>
+        <p>Install mods from the Explore tab or drag & drop files here</p>
+        <div class="queue-empty-hint">
+            <i data-lucide="lightbulb" style="width: 14px; height: 14px;"></i>
+            <span>Tip: Add mods to queue, then install all at once</span>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+/* Queue Wrapper */
+.queue-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Stats Header */
+.queue-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.stat-value {
+    font-size: var(--text-lg);
+    font-weight: var(--font-bold);
+    color: var(--text-primary);
+}
+
+.stat-value.text-success { color: var(--accent-success); }
+.stat-value.text-error { color: var(--accent-error); }
+
+.stat-label {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.stat-divider {
+    width: 1px;
+    height: 30px;
+    background: var(--border-primary);
+}
+
+/* Queue Section */
+.queue-section {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+/* Queue Item */
+.queue-item {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    transition: all var(--transition-base);
+}
+
+.queue-item.downloading {
+    border-color: var(--accent-info);
+    box-shadow: 0 0 20px rgba(72, 61, 139, 0.1);
+}
+
+.queue-item.processing {
+    border-color: var(--accent-primary);
+}
+
+.queue-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-2);
+}
+
+.queue-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.queue-item-name {
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.queue-item-status {
+    font-size: 11px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-icon {
+    width: 12px;
+    height: 12px;
+}
+
+.queue-item-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.btn-icon:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.btn-icon-danger:hover {
+    background: var(--danger-bg);
+    color: var(--accent-error);
+}
+
+/* Progress Bar */
+.queue-progress-container {
+    margin-bottom: var(--space-2);
+}
+
+.queue-progress-bar {
+    height: 6px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    position: relative;
+}
+
+.queue-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-info), var(--accent-primary));
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.queue-progress-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: progressGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes progressGlow {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+}
+
+.queue-progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+    font-size: 10px;
+    color: var(--text-tertiary);
+}
+
+.progress-percent {
+    font-weight: var(--font-semibold);
+    color: var(--text-secondary);
+}
+
+.progress-speed {
+    color: var(--accent-info);
+}
+
+.progress-eta {
+    color: var(--text-tertiary);
+}
+
+/* Stage Indicator */
+.queue-stages {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--border-primary);
+    margin-top: var(--space-2);
+}
+
+.stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    color: var(--text-tertiary);
+    transition: all var(--transition-base);
+}
+
+.stage.active {
+    color: var(--accent-primary);
+}
+
+.stage.done {
+    color: var(--accent-success);
+}
+
+.stage-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-secondary);
+    transition: all var(--transition-base);
+}
+
+.stage.active .stage-dot {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 8px var(--accent-primary);
+}
+
+.stage.done .stage-dot {
+    background: var(--accent-success);
+    border-color: var(--accent-success);
+}
+
+.stage-connector {
+    flex: 1;
+    height: 2px;
+    background: var(--border-secondary);
+    margin: 0 4px;
+    margin-bottom: 16px;
+    transition: background var(--transition-base);
+}
+
+.stage-connector.active {
+    background: var(--accent-primary);
+}
+
+/* Completed Section */
+.queue-completed-section {
+    border-top: 1px solid var(--border-primary);
+}
+
+.queue-section-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-xs);
+    font-weight: var(--font-semibold);
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.queue-section-header:hover {
+    background: var(--bg-tertiary);
+}
+
+.chevron-icon {
+    margin-left: auto;
+    transition: transform var(--transition-base);
+}
+
+details[open] .chevron-icon {
+    transform: rotate(180deg);
+}
+
+.completed-items {
+    padding: 0 var(--space-3) var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.completed-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+}
+
+.completed-item.success {
+    border-left: 3px solid var(--accent-success);
+}
+
+.completed-item.failed {
+    border-left: 3px solid var(--accent-error);
+}
+
+.completed-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.completed-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.completed-name {
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.completed-time {
+    font-size: 10px;
+    color: var(--text-tertiary);
+}
+
+.completed-error {
+    font-size: 10px;
+    color: var(--accent-error);
+}
+
+/* Queue Footer */
+.queue-footer {
+    padding: var(--space-3);
+    border-top: 1px solid var(--border-primary);
+    display: flex;
+    justify-content: center;
+}
+
+.btn-sm {
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-xs);
+    gap: var(--space-1);
+}
+
+/* Empty State */
+.queue-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-8) var(--space-4);
+    text-align: center;
+    flex: 1;
+}
+
+.queue-empty-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-xl);
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-4);
+}
+
+.queue-empty-icon i {
+    width: 28px;
+    height: 28px;
+    color: var(--text-tertiary);
+}
+
+.queue-empty h4 {
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-1);
+}
+
+.queue-empty p {
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+    max-width: 200px;
+}
+
+.queue-empty-hint {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    color: var(--accent-info);
+}
+
+/* Animations */
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.animate-progress {
+    animation: progressShine 2s ease-in-out infinite;
+}
+
+@keyframes progressShine {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(1.2); }
+    100% { filter: brightness(1); }
+}
+</style>
+
+<script>
+    lucide.createIcons();
+</script>

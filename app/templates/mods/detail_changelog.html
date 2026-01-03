@@ -1,0 +1,21 @@
+<div style="display: flex; flex-direction: column; gap: var(--space-6);">
+    {% for version, items in changelog.items() %}
+    <div class="card" style="padding: var(--space-4);">
+        <h3 style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--accent-primary); margin-bottom: var(--space-3);">
+            Version {{ version }}
+        </h3>
+        <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--space-2);">
+            {% for item in items %}
+            <li style="display: flex; gap: var(--space-3); color: var(--text-secondary); font-size: var(--text-sm); align-items: flex-start;">
+                <i data-lucide="chevron-right" style="width: 0.9rem; height: 0.9rem; color: var(--accent-primary); flex-shrink: 0; margin-top: 2px;"></i>
+                {{ item }}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: var(--space-12); color: var(--text-secondary);">
+        No changelog entries found for this mod.
+    </div>
+    {% endfor %}
+</div>

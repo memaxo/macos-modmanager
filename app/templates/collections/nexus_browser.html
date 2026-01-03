@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: var(--space-8);">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--space-6);">
+        <div>
+            <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
+                Browse Collections
+            </h1>
+            <p style="color: var(--text-secondary);">Discover curated mod collections from Nexus Mods</p>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: var(--space-4);">
+            <a href="/collections" class="btn btn-secondary" style="gap: var(--space-2);">
+                <i data-lucide="folder" style="width: 1rem; height: 1rem;"></i>
+                My Collections
+            </a>
+        </div>
+    </div>
+
+    <!-- Preview & Import by URL Section -->
+    <div class="card" style="margin-bottom: var(--space-6); padding: var(--space-6);">
+        <div style="display: flex; gap: var(--space-6); align-items: flex-start;">
+            <div style="flex: 1;">
+                <h2 style="font-size: var(--text-lg); font-weight: var(--font-semibold); margin-bottom: var(--space-2); display: flex; align-items: center; gap: var(--space-2);">
+                    <i data-lucide="search" style="width: 1.25rem; height: 1.25rem; color: var(--accent-primary);"></i>
+                    Inspect Collection by URL
+                </h2>
+                <p style="color: var(--text-secondary); font-size: var(--text-sm); margin-bottom: var(--space-4);">
+                    Paste a Nexus Mods collection URL to preview its contents and check macOS compatibility before importing
+                </p>
+                
+                <form id="preview-form" style="display: flex; gap: var(--space-3);"
+                      hx-get="/api/collections/preview-by-url"
+                      hx-target="#preview-modal-container"
+                      hx-swap="innerHTML">
+                    <input type="text" 
+                           name="url"
+                           id="collection-url-input"
+                           class="input" 
+                           placeholder="https://next.nexusmods.com/cyberpunk2077/collections/..."
+                           style="flex: 1;"
+                           required>
+                    <button type="submit" 
+                            class="btn btn-primary" 
+                            style="white-space: nowrap;">
+                        <i data-lucide="eye" style="width: 1rem; height: 1rem;"></i>
+                        Preview & Check Compatibility
+                    </button>
+                </form>
+                <p style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-2);">
+                    Preview will show all mods in the collection and highlight any that may not be compatible with macOS
+                </p>
+            </div>
+            
+            <div style="width: 1px; background: var(--border-primary); align-self: stretch;"></div>
+            
+            <div style="width: 300px;">
+                <h3 style="font-size: var(--text-sm); font-weight: var(--font-semibold); margin-bottom: var(--space-2); color: var(--text-secondary);">
+                    Browse on Nexus Mods
+                </h3>
+                <p style="font-size: var(--text-xs); color: var(--text-tertiary); margin-bottom: var(--space-3);">
+                    Find collections on Nexus and copy the URL to import
+                </p>
+                <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                    <a href="https://next.nexusmods.com/cyberpunk2077/collections" 
+                       target="_blank" 
+                       class="btn btn-secondary" 
+                       style="font-size: var(--text-sm); justify-content: flex-start;">
+                        <i data-lucide="external-link" style="width: 0.875rem; height: 0.875rem;"></i>
+                        Cyberpunk 2077 Collections
+                    </a>
+                    <a href="https://next.nexusmods.com/skyrimspecialedition/collections" 
+                       target="_blank" 
+                       class="btn btn-secondary" 
+                       style="font-size: var(--text-sm); justify-content: flex-start;">
+                        <i data-lucide="external-link" style="width: 0.875rem; height: 0.875rem;"></i>
+                        Skyrim SE Collections
+                    </a>
+                    <a href="https://next.nexusmods.com/baldursgate3/collections" 
+                       target="_blank" 
+                       class="btn btn-secondary" 
+                       style="font-size: var(--text-sm); justify-content: flex-start;">
+                        <i data-lucide="external-link" style="width: 0.875rem; height: 0.875rem;"></i>
+                        Baldur's Gate 3 Collections
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popular Collections Section -->
+    <div class="card" style="padding: var(--space-6);">
+        <h2 style="font-size: var(--text-lg); font-weight: var(--font-semibold); margin-bottom: var(--space-4); display: flex; align-items: center; gap: var(--space-2);">
+            <i data-lucide="sparkles" style="width: 1.25rem; height: 1.25rem; color: var(--warning-text);"></i>
+            Featured Collections for Cyberpunk 2077
+        </h2>
+        
+        <div class="collections-grid">
+            <!-- Manual featured collections -->
+            <div class="collection-card">
+                <div class="collection-card-image">
+                    <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="layers" style="width: 3rem; height: 3rem; color: white;"></i>
+                    </div>
+                    <div class="mod-count-badge">
+                        <i data-lucide="package" style="width: 0.75rem; height: 0.75rem;"></i>
+                        Browse All
+                    </div>
+                </div>
+                <div class="collection-card-body">
+                    <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); margin-bottom: var(--space-2);">
+                        All Cyberpunk Collections
+                    </h3>
+                    <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4);">
+                        Browse the full catalog of curated mod collections on Nexus Mods
+                    </p>
+                    <a href="https://next.nexusmods.com/cyberpunk2077/collections" 
+                       target="_blank"
+                       class="btn btn-primary"
+                       style="width: 100%; justify-content: center;">
+                        <i data-lucide="external-link" style="width: 0.875rem; height: 0.875rem;"></i>
+                        Browse on Nexus
+                    </a>
+                </div>
+            </div>
+            
+            <div class="collection-card">
+                <div class="collection-card-image">
+                    <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="eye" style="width: 3rem; height: 3rem; color: white;"></i>
+                    </div>
+                    <div class="mod-count-badge">
+                        <i data-lucide="package" style="width: 0.75rem; height: 0.75rem;"></i>
+                        Graphics
+                    </div>
+                </div>
+                <div class="collection-card-body">
+                    <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); margin-bottom: var(--space-2);">
+                        Visual Enhancement Collections
+                    </h3>
+                    <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4);">
+                        Collections focused on improving graphics, lighting, and visual effects
+                    </p>
+                    <a href="https://next.nexusmods.com/cyberpunk2077/collections?filterBy=category:visuals-and-graphics" 
+                       target="_blank"
+                       class="btn btn-primary"
+                       style="width: 100%; justify-content: center;">
+                        <i data-lucide="external-link" style="width: 0.875rem; height: 0.875rem;"></i>
+                        Browse Graphics
+                    </a>
+                </div>
+            </div>
+            
+            <div class="collection-card">
+                <div class="collection-card-image">
+                    <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="gamepad-2" style="width: 3rem; height: 3rem; color: white;"></i>
+                    </div>
+                    <div class="mod-count-badge">
+                        <i data-lucide="package" style="width: 0.75rem; height: 0.75rem;"></i>
+                        Gameplay
+                    </div>
+                </div>
+                <div class="collection-card-body">
+                    <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); margin-bottom: var(--space-2);">
+                        Gameplay Overhaul Collections
+                    </h3>
+                    <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4);">
+                        Collections that enhance gameplay mechanics, combat, and progression
+                    </p>
+                    <a href="https://next.nexusmods.com/cyberpunk2077/collections?filterBy=category:gameplay" 
+                       target="_blank"
+                       class="btn btn-primary"
+                       style="width: 100%; justify-content: center;">
+                        <i data-lucide="external-link" style="width: 0.875rem; height: 0.875rem;"></i>
+                        Browse Gameplay
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: var(--space-6); padding: var(--space-4); background: var(--bg-tertiary); border-radius: var(--radius-md); display: flex; align-items: flex-start; gap: var(--space-3);">
+            <i data-lucide="info" style="width: 1.25rem; height: 1.25rem; color: var(--info-text); flex-shrink: 0; margin-top: 2px;"></i>
+            <div>
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-2);">
+                    <strong style="color: var(--text-primary);">Note:</strong> 
+                    The Nexus Mods API doesn't currently support browsing collections directly. 
+                    Please use the links above to browse collections on the Nexus website, then copy the URL to import.
+                </p>
+                <p style="font-size: var(--text-xs); color: var(--text-tertiary);">
+                    We'll add full browsing support once the Nexus Mods GraphQL API supports collections.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .collections-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--space-6);
+    }
+    
+    .collection-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .collection-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .collection-card-image {
+        aspect-ratio: 16/9;
+        overflow: hidden;
+        background: var(--bg-tertiary);
+        position: relative;
+    }
+    
+    .collection-card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .collection-card:hover .collection-card-image img {
+        transform: scale(1.05);
+    }
+    
+    .collection-card-body {
+        padding: var(--space-4);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .mod-count-badge {
+        position: absolute;
+        bottom: var(--space-2);
+        right: var(--space-2);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 4px 8px;
+        border-radius: var(--radius-sm);
+        font-size: var(--text-xs);
+        font-weight: var(--font-semibold);
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+</style>
+
+<!-- Modal container for preview -->
+<div id="preview-modal-container"></div>
+{% endblock %}

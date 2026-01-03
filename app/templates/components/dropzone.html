@@ -51,28 +51,38 @@
 </style>
 
 <script>
-const dropzone = document.getElementById('dropzone');
-const fileInput = document.getElementById('file-input');
-
-dropzone.addEventListener('click', () => fileInput.click());
-
-dropzone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropzone.classList.add('dragover');
-});
-
-dropzone.addEventListener('dragleave', () => {
-    dropzone.classList.remove('dragover');
-});
-
-dropzone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropzone.classList.remove('dragover');
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', function() {
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
     
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-        handleFile(files[0]);
+    if (!dropzone || !fileInput) {
+        console.error('Dropzone elements not found');
+        return;
     }
+    
+    dropzone.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
 });
 
 function handleFileSelect(event) {
@@ -83,18 +93,28 @@ function handleFileSelect(event) {
 }
 
 function handleFile(file) {
+    if (!file) {
+        showNotification('No file selected', 'error');
+        return;
+    }
+    
     // Validate file type
     const validTypes = ['.zip', '.7z', '.rar'];
     const fileExt = '.' + file.name.split('.').pop().toLowerCase();
     
     if (!validTypes.includes(fileExt)) {
-        alert('Invalid file type. Please upload a .zip, .7z, or .rar file.');
+        showNotification('Invalid file type. Please upload a .zip, .7z, or .rar file.', 'error');
         return;
     }
     
     // Show progress
-    document.getElementById('upload-filename').textContent = file.name;
-    document.getElementById('upload-progress').style.display = 'block';
+    const progressEl = document.getElementById('upload-progress');
+    const filenameEl = document.getElementById('upload-filename');
+    
+    if (progressEl && filenameEl) {
+        filenameEl.textContent = file.name;
+        progressEl.style.display = 'block';
+    }
     
     // Upload file
     uploadFile(file);
@@ -103,8 +123,20 @@ function handleFile(file) {
 function uploadFile(file) {
     const formData = new FormData();
     formData.append('mod_file', file);
-    formData.append('check_compatibility', document.querySelector('input[name="check_compatibility"]').checked);
-    formData.append('create_backup', document.querySelector('input[name="create_backup"]').checked);
+    
+    const checkCompatibility = document.querySelector('input[name="check_compatibility"]');
+    if (checkCompatibility) {
+        formData.append('check_compatibility', checkCompatibility.checked);
+    } else {
+        formData.append('check_compatibility', 'true');
+    }
+    
+    // Note: create_backup is not currently supported by the API endpoint
+    // but we can include it for future compatibility
+    const createBackup = document.querySelector('input[name="create_backup"]');
+    if (createBackup) {
+        formData.append('create_backup', createBackup.checked);
+    }
     
     const xhr = new XMLHttpRequest();
     
@@ -117,19 +149,52 @@ function uploadFile(file) {
     });
     
     xhr.addEventListener('load', () => {
+        document.getElementById('upload-progress').style.display = 'none';
+        
         if (xhr.status === 200) {
-            document.getElementById('upload-progress').style.display = 'none';
-            showNotification('Mod installed successfully!', 'success');
-            setTimeout(() => {
-                window.location.href = '/mods';
-            }, 1500);
+            try {
+                const response = JSON.parse(xhr.responseText);
+                showNotification('Mod installed successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = '/mods';
+                }, 1500);
+            } catch (e) {
+                // If response is not JSON, assume success
+                showNotification('Mod installed successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = '/mods';
+                }, 1500);
+            }
         } else {
-            showNotification('Installation failed: ' + xhr.responseText, 'error');
+            let errorMessage = 'Installation failed';
+            try {
+                const errorResponse = JSON.parse(xhr.responseText);
+                if (errorResponse.detail) {
+                    if (typeof errorResponse.detail === 'string') {
+                        errorMessage = errorResponse.detail;
+                    } else if (errorResponse.detail.error) {
+                        errorMessage = errorResponse.detail.error;
+                    }
+                }
+            } catch (e) {
+                errorMessage = xhr.responseText || `HTTP ${xhr.status}: ${xhr.statusText}`;
+            }
+            showNotification(errorMessage, 'error');
+            // Reset file input
+            document.getElementById('file-input').value = '';
         }
     });
     
     xhr.addEventListener('error', () => {
-        showNotification('Upload failed', 'error');
+        document.getElementById('upload-progress').style.display = 'none';
+        showNotification('Upload failed - network error', 'error');
+        document.getElementById('file-input').value = '';
+    });
+    
+    xhr.addEventListener('abort', () => {
+        document.getElementById('upload-progress').style.display = 'none';
+        showNotification('Upload cancelled', 'error');
+        document.getElementById('file-input').value = '';
     });
     
     xhr.open('POST', '/api/mods/');
@@ -138,26 +203,61 @@ function uploadFile(file) {
 
 function showNotification(message, type) {
     const notificationArea = document.getElementById('notification-area');
-    if (!notificationArea) return;
+    if (!notificationArea) {
+        console.error('Notification area not found');
+        // Fallback to alert if notification area doesn't exist
+        alert(message);
+        return;
+    }
     
     const notification = document.createElement('div');
     notification.className = `toast toast-${type}`;
-    notification.textContent = message;
+    
+    // Set background color based on type
+    const bgColor = type === 'success' ? 'var(--success-bg)' : 
+                   type === 'error' ? 'var(--danger-bg)' : 
+                   'var(--bg-secondary)';
+    const borderColor = type === 'success' ? 'var(--success-border)' : 
+                       type === 'error' ? 'var(--danger-border)' : 
+                       'var(--border-primary)';
+    const textColor = type === 'success' ? 'var(--success-text)' : 
+                     type === 'error' ? 'var(--danger-text)' : 
+                     'var(--text-primary)';
+    
     notification.style.cssText = `
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-primary);
+        background: ${bgColor};
+        border: 1px solid ${borderColor};
         border-radius: var(--radius-lg);
         padding: var(--space-3);
         margin-bottom: var(--space-2);
         box-shadow: var(--shadow-lg);
+        color: ${textColor};
         animation: slideUp 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    `;
+    
+    // Add icon
+    const icon = type === 'success' ? 'check-circle' : 
+                type === 'error' ? 'x-circle' : 
+                'info';
+    notification.innerHTML = `
+        <i data-lucide="${icon}" style="width: 1rem; height: 1rem;"></i>
+        <span>${message}</span>
     `;
     
     notificationArea.appendChild(notification);
     
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+    
     setTimeout(() => {
         notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s ease';
         setTimeout(() => notification.remove(), 300);
-    }, 3000);
+    }, 5000);
 }
 </script>

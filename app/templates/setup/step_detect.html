@@ -1,0 +1,153 @@
+<!-- Step 1: Detection Results -->
+<div data-current-step="1">
+    {% if environment.game_detected %}
+    <!-- Game Found -->
+    <div class="check-item success">
+        <i data-lucide="check-circle" style="width: 24px; height: 24px; color: var(--accent-success); flex-shrink: 0;"></i>
+        <div style="flex: 1;">
+            <div style="font-weight: var(--font-semibold); color: var(--text-primary);">Cyberpunk 2077 Found</div>
+            <div style="font-size: var(--text-sm); color: var(--text-secondary);">{{ environment.game_path }}</div>
+        </div>
+    </div>
+    
+    {% if environment.game_version %}
+    <div class="check-item success">
+        <i data-lucide="info" style="width: 24px; height: 24px; color: var(--accent-info); flex-shrink: 0;"></i>
+        <div style="flex: 1;">
+            <div style="font-weight: var(--font-semibold); color: var(--text-primary);">Game Version</div>
+            <div style="font-size: var(--text-sm); color: var(--text-secondary);">{{ environment.game_version }} ({{ environment.game_launcher or 'Unknown launcher' }})</div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Framework Status -->
+    <div style="margin-top: var(--space-6); margin-bottom: var(--space-4);">
+        <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-3);">
+            Framework Status
+        </h3>
+    </div>
+    
+    <div class="check-item {% if environment.red4ext_installed %}success{% else %}warning{% endif %}">
+        <i data-lucide="{% if environment.red4ext_installed %}check-circle{% else %}alert-circle{% endif %}" 
+           style="width: 24px; height: 24px; color: {% if environment.red4ext_installed %}var(--accent-success){% else %}var(--accent-warning){% endif %}; flex-shrink: 0;"></i>
+        <div style="flex: 1;">
+            <div style="font-weight: var(--font-semibold); color: var(--text-primary);">RED4ext</div>
+            <div style="font-size: var(--text-sm); color: var(--text-secondary);">
+                {% if environment.red4ext_installed %}
+                Installed (v{{ environment.red4ext_version or 'unknown' }})
+                {% else %}
+                Not installed - Required for modding
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="check-item {% if environment.tweakxl_installed %}success{% else %}warning{% endif %}">
+        <i data-lucide="{% if environment.tweakxl_installed %}check-circle{% else %}minus-circle{% endif %}" 
+           style="width: 24px; height: 24px; color: {% if environment.tweakxl_installed %}var(--accent-success){% else %}var(--text-tertiary){% endif %}; flex-shrink: 0;"></i>
+        <div style="flex: 1;">
+            <div style="font-weight: var(--font-semibold); color: var(--text-primary);">TweakXL</div>
+            <div style="font-size: var(--text-sm); color: var(--text-secondary);">
+                {% if environment.tweakxl_installed %}
+                Installed (v{{ environment.tweakxl_version or 'unknown' }})
+                {% else %}
+                Not installed - Recommended
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="check-item {% if environment.archivexl_installed %}success{% else %}warning{% endif %}">
+        <i data-lucide="{% if environment.archivexl_installed %}check-circle{% else %}minus-circle{% endif %}" 
+           style="width: 24px; height: 24px; color: {% if environment.archivexl_installed %}var(--accent-success){% else %}var(--text-tertiary){% endif %}; flex-shrink: 0;"></i>
+        <div style="flex: 1;">
+            <div style="font-weight: var(--font-semibold); color: var(--text-primary);">ArchiveXL</div>
+            <div style="font-size: var(--text-sm); color: var(--text-secondary);">
+                {% if environment.archivexl_installed %}
+                Installed (v{{ environment.archivexl_version or 'unknown' }})
+                {% else %}
+                Not installed - Recommended
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Info -->
+    <div style="margin-top: var(--space-4); padding: var(--space-3); background: var(--bg-primary); border-radius: var(--radius-md); font-size: var(--text-sm); color: var(--text-tertiary);">
+        <div style="display: flex; gap: var(--space-4);">
+            <span>macOS {{ environment.macos_version or 'Unknown' }}</span>
+            <span>•</span>
+            <span>{% if environment.is_apple_silicon %}Apple Silicon{% else %}Intel{% endif %}</span>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div style="display: flex; gap: var(--space-3); margin-top: var(--space-6);">
+        {% if environment.setup_needed %}
+        <button 
+            class="btn btn-primary" 
+            style="flex: 1; justify-content: center;"
+            hx-get="/api/setup/step/select"
+            hx-target="#wizard-content"
+            hx-swap="innerHTML"
+            onclick="updateProgressSteps(2)">
+            <i data-lucide="arrow-right" style="width: 1rem; height: 1rem; margin-right: var(--space-2);"></i>
+            Continue to Setup
+        </button>
+        {% else %}
+        <a href="/dashboard" class="btn btn-primary" style="flex: 1; justify-content: center;">
+            <i data-lucide="check" style="width: 1rem; height: 1rem; margin-right: var(--space-2);"></i>
+            Setup Complete - Go to Dashboard
+        </a>
+        {% endif %}
+        <button 
+            class="btn btn-secondary"
+            hx-get="/api/setup/detect"
+            hx-target="#detection-results"
+            hx-swap="innerHTML">
+            <i data-lucide="refresh-cw" style="width: 1rem; height: 1rem;"></i>
+        </button>
+    </div>
+    
+    {% else %}
+    <!-- Game Not Found -->
+    <div class="check-item error">
+        <i data-lucide="x-circle" style="width: 24px; height: 24px; color: var(--accent-error); flex-shrink: 0;"></i>
+        <div style="flex: 1;">
+            <div style="font-weight: var(--font-semibold); color: var(--text-primary);">Cyberpunk 2077 Not Found</div>
+            <div style="font-size: var(--text-sm); color: var(--text-secondary);">Could not detect the game installation</div>
+        </div>
+    </div>
+    
+    <div style="margin-top: var(--space-4); padding: var(--space-4); background: var(--bg-primary); border-radius: var(--radius-md);">
+        <p style="color: var(--text-secondary); font-size: var(--text-sm); margin-bottom: var(--space-3);">
+            Please ensure Cyberpunk 2077 is installed via Steam or GOG.
+        </p>
+        <p style="color: var(--text-tertiary); font-size: var(--text-xs);">
+            Expected locations:
+        </p>
+        <ul style="color: var(--text-tertiary); font-size: var(--text-xs); margin-left: var(--space-4); margin-top: var(--space-2);">
+            <li>~/Library/Application Support/Steam/steamapps/common/Cyberpunk 2077</li>
+            <li>~/Library/Application Support/GOG.com/Games/Cyberpunk 2077</li>
+        </ul>
+    </div>
+    
+    <div style="display: flex; gap: var(--space-3); margin-top: var(--space-6);">
+        <button 
+            class="btn btn-secondary" 
+            style="flex: 1; justify-content: center;"
+            hx-get="/api/setup/detect"
+            hx-target="#detection-results"
+            hx-swap="innerHTML">
+            <i data-lucide="refresh-cw" style="width: 1rem; height: 1rem; margin-right: var(--space-2);"></i>
+            Scan Again
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+</script>

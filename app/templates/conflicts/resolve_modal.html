@@ -1,0 +1,79 @@
+<div class="modal-backdrop" onclick="this.parentElement.style.display='none'"></div>
+<div class="modal-content" style="max-width: 800px; padding: 0; overflow: hidden;">
+    <div style="padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--border-primary); display: flex; justify-content: space-between; align-items: center; background: var(--bg-secondary);">
+        <h2 style="font-size: var(--text-xl); font-weight: var(--font-bold); color: var(--text-primary);">Resolve Conflict</h2>
+        <button class="btn btn-ghost" onclick="this.closest('#modal-container').style.display='none'">✕</button>
+    </div>
+    
+    <div style="padding: var(--space-6);">
+        <div style="margin-bottom: var(--space-6); padding: var(--space-4); background: var(--bg-tertiary); border-radius: var(--radius-md);">
+            <div style="color: var(--text-secondary); font-size: var(--text-sm); margin-bottom: var(--space-1);">Conflict in file:</div>
+            <code style="font-size: var(--text-lg); color: var(--accent-primary);">{{ conflict.file_path }}</code>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6);">
+            <!-- Mod 1 -->
+            <div class="card" style="padding: var(--space-4); border: 2px solid transparent; transition: border-color 0.2s;" onclick="selectMod(1)">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4);">
+                    <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold);">{{ conflict.mod1.name }}</h3>
+                    <span class="badge badge-info" style="font-size: var(--text-xs);">v{{ conflict.mod1.version }}</span>
+                </div>
+                <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4);">
+                    by {{ conflict.mod1.author }}
+                </div>
+                {% if conflict.mod1.file_info %}
+                <div style="padding: var(--space-3); background: var(--bg-tertiary); border-radius: var(--radius-sm); font-family: monospace; font-size: var(--text-xs);">
+                    Size: {{ (conflict.mod1.file_info.size / 1024) | round(2) }} KB<br>
+                    Hash: {{ conflict.mod1.file_info.hash[:16] }}...
+                </div>
+                {% endif %}
+                <button class="btn btn-secondary" style="width: 100%; margin-top: var(--space-4);" 
+                        onclick="resolveWithMod('{{ conflict.id }}', '{{ conflict.mod1.id }}')">
+                    Choose this mod
+                </button>
+            </div>
+
+            <!-- Mod 2 -->
+            <div class="card" style="padding: var(--space-4); border: 2px solid transparent; transition: border-color 0.2s;" onclick="selectMod(2)">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4);">
+                    <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold);">{{ conflict.mod2.name }}</h3>
+                    <span class="badge badge-info" style="font-size: var(--text-xs);">v{{ conflict.mod2.version }}</span>
+                </div>
+                <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4);">
+                    by {{ conflict.mod2.author }}
+                </div>
+                {% if conflict.mod2.file_info %}
+                <div style="padding: var(--space-3); background: var(--bg-tertiary); border-radius: var(--radius-sm); font-family: monospace; font-size: var(--text-xs);">
+                    Size: {{ (conflict.mod2.file_info.size / 1024) | round(2) }} KB<br>
+                    Hash: {{ conflict.mod2.file_info.hash[:16] }}...
+                </div>
+                {% endif %}
+                <button class="btn btn-secondary" style="width: 100%; margin-top: var(--space-4);"
+                        onclick="resolveWithMod('{{ conflict.id }}', '{{ conflict.mod2.id }}')">
+                    Choose this mod
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div style="padding: var(--space-4) var(--space-6); border-top: 1px solid var(--border-primary); display: flex; justify-content: flex-end; gap: var(--space-3); background: var(--bg-secondary);">
+        <button class="btn btn-ghost" onclick="document.getElementById('modal-container').style.display='none'">Cancel</button>
+    </div>
+</div>
+
+<script>
+    function resolveWithMod(conflictId, winningModId) {
+        const formData = new FormData();
+        formData.append('conflict_id', conflictId);
+        formData.append('winning_mod_id', winningModId);
+        
+        htmx.ajax('POST', '/api/compatibility/conflicts/resolve', {
+            values: { conflict_id: conflictId, winning_mod_id: winningModId },
+            target: '#notification-area',
+            swap: 'beforeend'
+        }).then(() => {
+            document.getElementById('modal-container').style.display = 'none';
+            htmx.trigger('#conflict-list', 'refresh');
+        });
+    }
+</script>

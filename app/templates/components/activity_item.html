@@ -1,12 +1,12 @@
 <div class="card" style="padding: var(--space-4); margin-bottom: var(--space-3);">
     <div style="display: flex; align-items: start; gap: var(--space-3);">
-        <div style="font-size: var(--text-xl);">
-            {% if type == 'install' %}✅
-            {% elif type == 'uninstall' %}❌
-            {% elif type == 'update' %}🔄
-            {% elif type == 'conflict' %}⚠️
-            {% elif type == 'error' %}🔴
-            {% else %}ℹ️
+        <div style="display: flex; align-items: center; justify-content: center; color: {% if type == 'install' %}var(--accent-success){% elif type == 'uninstall' %}var(--accent-error){% elif type == 'update' %}var(--accent-info){% elif type == 'conflict' %}var(--accent-warning){% elif type == 'error' %}var(--accent-error){% else %}var(--accent-info){% endif %};">
+            {% if type == 'install' %}<i data-lucide="check-circle" style="width: 1.2rem; height: 1.2rem;"></i>
+            {% elif type == 'uninstall' %}<i data-lucide="minus-circle" style="width: 1.2rem; height: 1.2rem;"></i>
+            {% elif type == 'update' %}<i data-lucide="refresh-cw" style="width: 1.2rem; height: 1.2rem;"></i>
+            {% elif type == 'conflict' %}<i data-lucide="alert-triangle" style="width: 1.2rem; height: 1.2rem;"></i>
+            {% elif type == 'error' %}<i data-lucide="x-circle" style="width: 1.2rem; height: 1.2rem;"></i>
+            {% else %}<i data-lucide="info" style="width: 1.2rem; height: 1.2rem;"></i>
             {% endif %}
         </div>
         <div style="flex: 1;">

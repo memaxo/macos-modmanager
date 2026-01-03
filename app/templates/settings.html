@@ -1,29 +1,78 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="margin-bottom: var(--space-6);">
+<div style="margin-bottom: var(--space-8);">
     <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
         Settings
     </h1>
+    <p style="color: var(--text-secondary);">Configure your mod manager preferences</p>
+</div>
     
+<div style="display: grid; grid-template-columns: 1fr; gap: var(--space-8);">
+    <!-- Nexus Mods API -->
     <div class="card" style="padding: var(--space-6);">
-        <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4);">
-            General
+        <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4); display: flex; align-items: center; gap: var(--space-2);">
+            <i data-lucide="key" style="width: 1.2rem; height: 1.2rem; color: var(--accent-primary);"></i>
+            Nexus Mods Integration
         </h2>
-        <form>
+        <form hx-post="/api/settings/nexus-api-key" hx-target="#notification-area" hx-swap="beforeend">
             <div style="margin-bottom: var(--space-4);">
-                <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
-                    <input type="checkbox" checked style="width: 1.25rem; height: 1.25rem;">
-                    <span style="color: var(--text-secondary);">Auto-check for updates</span>
+                <label for="nexus_api_key" style="display: block; font-weight: var(--font-medium); margin-bottom: var(--space-2); color: var(--text-secondary);">
+                    Personal API Key
                 </label>
+                <div style="display: flex; gap: var(--space-2);">
+                    <input 
+                        type="password" 
+                        id="nexus_api_key" 
+                        name="api_key" 
+                        value="{{ db_settings.get('nexus_api_key', config.nexus_api_key) }}"
+                        placeholder="Enter your Nexus API key..." 
+                        style="flex-grow: 1; padding: var(--space-2) var(--space-3); background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: var(--radius-md); color: var(--text-primary);">
+                    <button type="submit" class="btn btn-primary">Save Key</button>
+                </div>
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-2);">
+                    You can find your Personal API Key in your <a href="https://next.nexusmods.com/settings/api-keys" target="_blank" style="color: var(--accent-primary); text-decoration: underline;">Nexus Mods Account Settings</a>.
+                </p>
             </div>
+        </form>
+    </div>
+
+    <!-- General Settings -->
+    <div class="card" style="padding: var(--space-6);">
+        <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4); display: flex; align-items: center; gap: var(--space-2);">
+            <i data-lucide="settings-2" style="width: 1.2rem; height: 1.2rem; color: var(--accent-primary);"></i>
+            General Preferences
+        </h2>
+        <form hx-post="/api/settings/general" hx-target="#notification-area" hx-swap="beforeend">
             <div style="margin-bottom: var(--space-4);">
-                <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
-                    <input type="checkbox" checked style="width: 1.25rem; height: 1.25rem;">
-                    <span style="color: var(--text-secondary);">Backup before install</span>
+                <label style="display: flex; align-items: center; gap: var(--space-3); cursor: pointer;">
+                    <input 
+                        type="checkbox" 
+                        name="auto_check_updates" 
+                        {% if db_settings.get('auto_check_updates') == 'True' or config.auto_check_updates %}checked{% endif %}
+                        style="width: 1.25rem; height: 1.25rem; accent-color: var(--accent-primary);">
+                    <span style="color: var(--text-primary); font-weight: var(--font-medium);">Auto-check for updates</span>
                 </label>
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-left: 2rem;">
+                    Automatically check Nexus Mods for version updates when the app starts.
+                </p>
             </div>
-            <button type="submit" class="btn btn-primary">Save Settings</button>
+            
+            <div style="margin-bottom: var(--space-6);">
+                <label style="display: flex; align-items: center; gap: var(--space-3); cursor: pointer;">
+                    <input 
+                        type="checkbox" 
+                        name="backup_before_install" 
+                        {% if db_settings.get('backup_before_install') == 'True' or config.backup_before_install %}checked{% endif %}
+                        style="width: 1.25rem; height: 1.25rem; accent-color: var(--accent-primary);">
+                    <span style="color: var(--text-primary); font-weight: var(--font-medium);">Backup before install</span>
+                </label>
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-left: 2rem;">
+                    Create a backup of game files before they are overwritten by a new mod.
+                </p>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Save Preferences</button>
         </form>
     </div>
 </div>

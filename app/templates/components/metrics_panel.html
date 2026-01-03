@@ -1,0 +1,119 @@
+<!-- Metrics Panel -->
+<div class="card" style="padding: var(--space-4);">
+    <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-3); display: flex; align-items: center; gap: var(--space-2);">
+        <i data-lucide="activity" style="width: 1rem; height: 1rem; color: var(--accent-primary);"></i>
+        Process Metrics
+    </h3>
+    
+    <div id="metrics-content"
+         hx-get="/api/launcher/metrics"
+         hx-trigger="load, every 2s"
+         hx-swap="innerHTML"
+         style="display: flex; flex-direction: column; gap: var(--space-3);">
+        <div style="text-align: center; padding: var(--space-4); color: var(--text-secondary);">
+            <i data-lucide="loader-2" class="animate-spin" style="width: 1rem; height: 1rem;"></i>
+            Loading metrics...
+        </div>
+    </div>
+</div>
+
+<script id="metrics-template" type="text/template">
+    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+        <!-- Status Badge -->
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: var(--text-xs); color: var(--text-secondary);">Status</span>
+            <span class="badge" id="status-badge" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);">
+                {{status}}
+            </span>
+        </div>
+        
+        <!-- PID -->
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: var(--text-xs); color: var(--text-secondary);">Process ID</span>
+            <span style="font-size: var(--text-xs); color: var(--text-primary); font-family: monospace;">{{pid}}</span>
+        </div>
+        
+        <!-- Uptime -->
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: var(--text-xs); color: var(--text-secondary);">Uptime</span>
+            <span style="font-size: var(--text-xs); color: var(--text-primary);" id="uptime-display">{{uptime}}</span>
+        </div>
+        
+        <!-- CPU Usage -->
+        <div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-1);">
+                <span style="font-size: var(--text-xs); color: var(--text-secondary);">CPU Usage</span>
+                <span style="font-size: var(--text-xs); color: var(--text-primary); font-weight: var(--font-medium);">{{cpu_percent}}%</span>
+            </div>
+            <div style="height: 6px; background: var(--bg-tertiary); border-radius: var(--radius-full); overflow: hidden;">
+                <div style="height: 100%; background: var(--accent-primary); width: {{cpu_percent}}%; transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+        
+        <!-- Memory Usage -->
+        <div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-1);">
+                <span style="font-size: var(--text-xs); color: var(--text-secondary);">Memory</span>
+                <span style="font-size: var(--text-xs); color: var(--text-primary); font-weight: var(--font-medium);">{{memory_mb}} MB ({{memory_percent}}%)</span>
+            </div>
+            <div style="height: 6px; background: var(--bg-tertiary); border-radius: var(--radius-full); overflow: hidden;">
+                <div style="height: 100%; background: var(--accent-info); width: {{memory_percent}}%; transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+    </div>
+</script>
+
+<script>
+(function() {
+    function formatUptime(seconds) {
+        if (!seconds || seconds === 0) return "0s";
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        
+        const parts = [];
+        if (hours > 0) parts.push(`${hours}h`);
+        if (minutes > 0) parts.push(`${minutes}m`);
+        if (secs > 0 || parts.length === 0) parts.push(`${secs}s`);
+        
+        return parts.join(" ");
+    }
+    
+    function getStatusBadgeClass(status) {
+        switch(status) {
+            case "running": return "badge-success";
+            case "stopped": return "badge";
+            case "starting": return "badge-warning";
+            case "crashed": return "badge-error";
+            default: return "badge";
+        }
+    }
+    
+    // Override HTMX swap to format metrics
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        if (event.detail.target.id === 'metrics-content') {
+            const data = JSON.parse(event.detail.xhr.response);
+            if (data.status) {
+                const template = document.getElementById('metrics-template').innerHTML;
+                let html = template
+                    .replace(/\{\{status\}\}/g, data.status)
+                    .replace(/\{\{pid\}\}/g, data.pid || "N/A")
+                    .replace(/\{\{uptime\}\}/g, formatUptime(data.uptime_seconds))
+                    .replace(/\{\{cpu_percent\}\}/g, data.cpu_percent || 0)
+                    .replace(/\{\{memory_mb\}\}/g, data.memory_mb || 0)
+                    .replace(/\{\{memory_percent\}\}/g, data.memory_percent || 0);
+                
+                event.detail.target.innerHTML = html;
+                
+                // Update status badge class
+                const badge = event.detail.target.querySelector('#status-badge');
+                if (badge) {
+                    badge.className = 'badge ' + getStatusBadgeClass(data.status);
+                }
+            } else {
+                event.detail.target.innerHTML = '<div style="text-align: center; padding: var(--space-4); color: var(--text-secondary);">Game not running</div>';
+            }
+        }
+    });
+})();
+</script>

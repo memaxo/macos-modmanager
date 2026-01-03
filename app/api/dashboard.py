@@ -4,9 +4,11 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 from app.database import get_db
-from app.models.mod import Mod
+from app.models.mod import Mod, ModInstallation
+from app.models.profile import ModProfile
+from app.models.collection import Collection
 from app.models.compatibility import ModConflict
-from app.core.game_detector import detect_cyberpunk_installations
+from app.core.game_detector import detect_game_installations
 from datetime import datetime, timedelta
 from typing import List, Dict, Any
 
@@ -23,16 +25,26 @@ async def dashboard(request: Request, db: AsyncSession = Depends(get_db)):
     # Get system health
     system_health = await get_system_health(db)
     
+    # Get current profile
+    profile_result = await db.execute(select(ModProfile).where(ModProfile.is_default == True))
+    current_profile = profile_result.scalar_one_or_none()
+    
+    # Get recent collections
+    collections_result = await db.execute(select(Collection).order_by(Collection.imported_at.desc()).limit(3))
+    recent_collections = collections_result.scalars().all()
+    
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
         "stats": stats,
-        "system_health": system_health
+        "system_health": system_health,
+        "current_profile": current_profile,
+        "recent_collections": recent_collections
     })
 
 
 @router.get("/stats")
 async def get_dashboard_stats(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
-    """Get dashboard statistics"""
+    """Get dashboard statistics with detailed analytics"""
     # Total mods
     total_result = await db.execute(select(func.count(Mod.id)))
     total_mods = total_result.scalar() or 0
@@ -49,7 +61,21 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)) -> Dict[str, A
     )
     conflicts = conflicts_result.scalar() or 0
     
-    # Updates available (placeholder - would check Nexus API)
+    # Disk usage and category breakdown
+    disk_result = await db.execute(
+        select(Mod.mod_type, func.sum(Mod.file_size), func.count(Mod.id))
+        .where(Mod.is_active == True)
+        .group_by(Mod.mod_type)
+    )
+    breakdown = disk_result.all()
+    
+    total_size = sum(b[1] for b in breakdown if b[1])
+    categories = [
+        {"type": b[0] or "Unknown", "size": b[1] or 0, "count": b[2]}
+        for b in breakdown
+    ]
+    
+    # Updates available (Placeholder - should ideally use UpdateManager)
     updates_available = 0
     
     # Mod change (mods added in last 24 hours)
@@ -64,25 +90,28 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)) -> Dict[str, A
         "enabled_mods": enabled_mods,
         "conflicts": conflicts,
         "updates_available": updates_available,
-        "mod_change": mod_change
+        "mod_change": mod_change,
+        "total_size_gb": round(total_size / (1024*1024*1024), 2) if total_size else 0,
+        "categories": categories
     }
 
 
 @router.get("/activity", response_class=HTMLResponse)
 async def get_recent_activity(request: Request, db: AsyncSession = Depends(get_db)):
     """Get recent activity feed"""
-    # Get recent mods (last 10)
-    recent_mods_result = await db.execute(
-        select(Mod)
-        .order_by(Mod.updated_at.desc())
+    # Get recent installations (last 10)
+    recent_installs_result = await db.execute(
+        select(ModInstallation, Mod.name)
+        .join(Mod, ModInstallation.mod_id == Mod.id)
+        .order_by(ModInstallation.installed_at.desc())
         .limit(10)
     )
-    recent_mods = recent_mods_result.scalars().all()
+    recent_installs = recent_installs_result.all()
     
     # Get recent conflicts
     recent_conflicts_result = await db.execute(
         select(ModConflict)
-        .order_by(ModConflict.created_at.desc())
+        .order_by(ModConflict.detected_at.desc())
         .limit(5)
     )
     recent_conflicts = recent_conflicts_result.scalars().all()
@@ -90,31 +119,18 @@ async def get_recent_activity(request: Request, db: AsyncSession = Depends(get_d
     # Build activity items
     activities = []
     
-    for mod in recent_mods:
-        install_date = mod.install_date
-        update_date = mod.update_date
-        
-        if update_date is None or (install_date and update_date and install_date.date() == update_date.date() and abs((update_date - install_date).total_seconds()) < 60):
-            # New installation
+    for install, mod_name in recent_installs:
             activities.append({
-                "type": "install",
-                "message": f"Mod '{mod.name}' installed",
-                "timestamp": install_date.strftime("%Y-%m-%d %H:%M") if install_date else "Unknown",
-                "undo_action": None
-            })
-        else:
-            # Update
-            activities.append({
-                "type": "update",
-                "message": f"Mod '{mod.name}' updated",
-                "timestamp": update_date.strftime("%Y-%m-%d %H:%M") if update_date else "Unknown",
-                "undo_action": None
+            "type": install.install_type,
+            "message": f"Mod '{mod_name}' {install.install_type}ed",
+            "timestamp": install.installed_at.strftime("%Y-%m-%d %H:%M") if install.installed_at else "Unknown",
+            "undo_action": f"/api/mods/rollback/{install.id}" if install.rollback_available else None
             })
     
     for conflict in recent_conflicts:
         activities.append({
             "type": "conflict",
-            "message": f"Conflict detected: {conflict.conflict_type}",
+            "message": f"Conflict detected for {conflict.file_path}",
             "timestamp": conflict.detected_at.strftime("%Y-%m-%d %H:%M") if conflict.detected_at else "Unknown",
             "undo_action": None
         })
@@ -135,7 +151,7 @@ async def get_system_health(db: AsyncSession = Depends(get_db)) -> List[Dict[str
     health_items = []
     
     # Check game detection
-    detected_games = await detect_cyberpunk_installations()
+    detected_games = await detect_game_installations()
     
     if detected_games:
         health_items.append({

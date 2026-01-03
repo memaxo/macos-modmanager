@@ -1,0 +1,397 @@
+<div class="modal-overlay" onclick="this.remove()">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h2 style="font-size: var(--text-xl); font-weight: var(--font-bold); display: flex; align-items: center; gap: var(--space-3);">
+                {{ mod.name or 'Mod Preview' }}
+                {% if compat_status == 'compatible' %}
+                <span class="badge badge-success" style="font-size: var(--text-xs);">
+                    <i data-lucide="check-circle" style="width: 0.75rem; height: 0.75rem;"></i>
+                    macOS Compatible
+                </span>
+                {% else %}
+                <span class="badge badge-error" style="font-size: var(--text-xs);">
+                    <i data-lucide="x-circle" style="width: 0.75rem; height: 0.75rem;"></i>
+                    Not Compatible
+                </span>
+                {% endif %}
+            </h2>
+            <button class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()" style="padding: var(--space-1);">
+                <i data-lucide="x" style="width: 1.25rem; height: 1.25rem;"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <!-- Mod Image -->
+            {% if mod.picture_url %}
+            <div style="aspect-ratio: 16/9; overflow: hidden; border-radius: var(--radius-md); margin-bottom: var(--space-4); background: var(--bg-tertiary);">
+                <img src="{{ mod.picture_url }}" 
+                     alt="{{ mod.name }}" 
+                     style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            {% endif %}
+            
+            <!-- Author and Category Info -->
+            <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: var(--space-2);">
+                    <span style="font-size: var(--text-sm); color: var(--text-secondary);">
+                        by <strong>{{ mod.author or mod.uploaded_by or 'Unknown' }}</strong>
+                    </span>
+                </div>
+                
+                {% if mod.category_id %}
+                <span class="badge" style="background: var(--bg-tertiary); color: var(--text-secondary);">
+                    {{ mod.category_id }}
+                </span>
+                {% endif %}
+                
+                <span style="font-size: var(--text-xs); color: var(--text-tertiary);">
+                    v{{ mod.version or '1.0' }}
+                </span>
+            </div>
+            
+            <!-- Summary -->
+            {% if mod.summary %}
+            <p style="color: var(--text-secondary); margin-bottom: var(--space-4); line-height: 1.6;">
+                {{ mod.summary }}
+            </p>
+            {% endif %}
+            
+            <!-- Stats -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-6); padding: var(--space-4); background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                <div style="text-align: center;">
+                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--accent-primary);">
+                        {% if mod.endorsement_count %}
+                            {% if mod.endorsement_count >= 1000 %}
+                                {{ "%.1f"|format(mod.endorsement_count / 1000) }}K
+                            {% else %}
+                                {{ mod.endorsement_count }}
+                            {% endif %}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </div>
+                    <div style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase;">Endorsements</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--text-primary);">
+                        {% if mod.mod_downloads or mod.mod_unique_downloads %}
+                            {% set downloads = mod.mod_downloads or mod.mod_unique_downloads %}
+                            {% if downloads >= 1000000 %}
+                                {{ "%.1f"|format(downloads / 1000000) }}M
+                            {% elif downloads >= 1000 %}
+                                {{ "%.1f"|format(downloads / 1000) }}K
+                            {% else %}
+                                {{ downloads }}
+                            {% endif %}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </div>
+                    <div style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase;">Downloads</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--text-primary);">
+                        {{ files|length if files else 0 }}
+                    </div>
+                    <div style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase;">Files</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--text-primary);">
+                        {{ mod.version or '1.0' }}
+                    </div>
+                    <div style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase;">Version</div>
+                </div>
+            </div>
+            
+            <!-- Compatibility Section -->
+            {% if compat_status == 'incompatible' %}
+            <div style="background: var(--error-bg); border: 1px solid var(--error-text); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4);">
+                <div style="display: flex; align-items: flex-start; gap: var(--space-3);">
+                    <i data-lucide="x-circle" style="width: 1.5rem; height: 1.5rem; color: var(--error-text); flex-shrink: 0; margin-top: 2px;"></i>
+                    <div>
+                        <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--error-text); margin-bottom: var(--space-2);">
+                            Not Compatible with macOS
+                        </h3>
+                        {% if compat_reason %}
+                        <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-3);">
+                            {{ compat_reason }}
+                        </p>
+                        {% endif %}
+                        
+                        <!-- Specific incompatibility flags -->
+                        <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+                            {% if compat_flags.has_dll %}
+                            <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--error-text);">
+                                <i data-lucide="file-code" style="width: 0.75rem; height: 0.75rem;"></i>
+                                Contains DLL Files
+                            </span>
+                            {% endif %}
+                            {% if compat_flags.has_red4ext %}
+                            <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--error-text);">
+                                Requires RED4ext
+                            </span>
+                            {% endif %}
+                            {% if compat_flags.has_cet %}
+                            <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--error-text);">
+                                Requires Cyber Engine Tweaks
+                            </span>
+                            {% endif %}
+                            {% if compat_flags.has_archivexl %}
+                            <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--error-text);">
+                                Requires ArchiveXL
+                            </span>
+                            {% endif %}
+                            {% if compat_flags.has_tweakxl %}
+                            <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--error-text);">
+                                Requires TweakXL
+                            </span>
+                            {% endif %}
+                            {% if compat_flags.has_codeware %}
+                            <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--error-text);">
+                                Requires Codeware
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div style="background: var(--success-bg); border: 1px solid var(--success-text); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4);">
+                <div style="display: flex; align-items: flex-start; gap: var(--space-3);">
+                    <i data-lucide="check-circle" style="width: 1.5rem; height: 1.5rem; color: var(--success-text); flex-shrink: 0; margin-top: 2px;"></i>
+                    <div>
+                        <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--success-text); margin-bottom: var(--space-1);">
+                            Compatible with macOS
+                        </h3>
+                        <p style="font-size: var(--text-sm); color: var(--text-secondary);">
+                            No Windows-only dependencies were detected. This mod should work on macOS.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Available Files -->
+            {% if files %}
+            <div style="margin-bottom: var(--space-4);">
+                <h3 style="font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--text-secondary); text-transform: uppercase; margin-bottom: var(--space-3); display: flex; align-items: center; gap: var(--space-2);">
+                    <i data-lucide="file-archive" style="width: 1rem; height: 1rem;"></i>
+                    Available Files ({{ files|length }})
+                </h3>
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-primary); border-radius: var(--radius-md);">
+                    {% for file in files %}
+                    <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border-bottom: 1px solid var(--border-primary); {% if file == main_file %}background: rgba(59, 130, 246, 0.05);{% endif %}">
+                        <i data-lucide="file" style="width: 1rem; height: 1rem; color: var(--text-tertiary); flex-shrink: 0;"></i>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                <span style="font-size: var(--text-sm); font-weight: var(--font-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    {{ file.name or file.file_name or 'Unknown File' }}
+                                </span>
+                                {% if file.is_primary or file == main_file %}
+                                <span class="badge" style="background: var(--info-bg); color: var(--info-text); font-size: 10px; padding: 2px 6px;">Main</span>
+                                {% endif %}
+                            </div>
+                            <div style="font-size: var(--text-xs); color: var(--text-tertiary); display: flex; gap: var(--space-3);">
+                                <span>v{{ file.version or '1.0' }}</span>
+                                {% if file.size or file.file_size %}
+                                <span>{{ ((file.size or file.file_size) / 1024 / 1024)|round(1) }} MB</span>
+                                {% endif %}
+                                {% if file.category_name %}
+                                <span>{{ file.category_name }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Description Preview (collapsed by default) -->
+            {% if mod.description %}
+            <details style="margin-bottom: var(--space-4);">
+                <summary style="cursor: pointer; font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--text-secondary); text-transform: uppercase; padding: var(--space-2) 0; display: flex; align-items: center; gap: var(--space-2);">
+                    <i data-lucide="file-text" style="width: 1rem; height: 1rem;"></i>
+                    Full Description
+                </summary>
+                <div style="padding: var(--space-4); background: var(--bg-tertiary); border-radius: var(--radius-md); margin-top: var(--space-2); max-height: 300px; overflow-y: auto;">
+                    <div style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap;">{{ mod.description|striptags|truncate(2000) }}</div>
+                </div>
+            </details>
+            {% endif %}
+        </div>
+        
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">
+                Close
+            </button>
+            <a href="{{ original_url }}" 
+               target="_blank"
+               class="btn btn-secondary">
+                <i data-lucide="external-link" style="width: 1rem; height: 1rem;"></i>
+                View on Nexus
+            </a>
+            {% if compat_status == 'compatible' and main_file %}
+            <button class="btn btn-primary"
+                    onclick="installFromPreview({{ mod.mod_id }}, {{ main_file.file_id }}, '{{ main_file.name or main_file.file_name or 'selected file' }}', this)">
+                <i data-lucide="download" style="width: 1rem; height: 1rem;"></i>
+                Install Mod
+            </button>
+            {% elif compat_status == 'incompatible' %}
+            <button class="btn btn-warning" disabled title="This mod is not compatible with macOS">
+                <i data-lucide="alert-triangle" style="width: 1rem; height: 1rem;"></i>
+                Not Compatible
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: var(--space-4);
+        animation: fadeIn 0.2s ease;
+    }
+    
+    .modal {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        width: 100%;
+        animation: slideUp 0.2s ease;
+    }
+    
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--space-4);
+        border-bottom: 1px solid var(--border-primary);
+    }
+    
+    .modal-body {
+        padding: var(--space-4);
+    }
+    
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--space-2);
+        padding: var(--space-4);
+        border-top: 1px solid var(--border-primary);
+    }
+    
+    .badge-success {
+        background: var(--success-bg);
+        color: var(--success-text);
+    }
+    
+    .badge-error {
+        background: var(--error-bg);
+        color: var(--error-text);
+    }
+    
+    .btn-warning {
+        background: var(--warning-bg);
+        color: var(--warning-text);
+        border: 1px solid var(--warning-text);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    details summary::-webkit-details-marker {
+        display: none;
+    }
+    
+    details summary::before {
+        content: '▶';
+        display: inline-block;
+        margin-right: var(--space-2);
+        transition: transform 0.2s;
+    }
+    
+    details[open] summary::before {
+        transform: rotate(90deg);
+    }
+</style>
+
+<script>
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+    
+    function installFromPreview(modId, fileId, fileName, button) {
+        button.disabled = true;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i data-lucide="loader-2" class="animate-spin" style="width: 1rem; height: 1rem;"></i> Installing...';
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+        
+        // Generate job ID (matches format used by ModManager)
+        const jobId = `nexus_${modId}`;
+        
+        // Show installation progress modal
+        if (typeof window.showInstallProgress === 'function') {
+            window.showInstallProgress(fileName || `Mod ${modId}`, null, jobId);
+        }
+        
+        // Close preview modal
+        const modal = button.closest('.modal-overlay');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        
+        fetch(`/api/mods/discovery/${modId}/install`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                file_id: fileId,
+                check_compatibility: true
+            })
+        })
+        .then(async response => {
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+                throw new Error(errorData.detail?.error || errorData.detail || `HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Success will be handled by progress polling
+            if (typeof window.addLogEntry === 'function') {
+                window.addLogEntry('success', 'Installation request accepted');
+            }
+        })
+        .catch(error => {
+            console.error('Installation error:', error);
+            if (typeof window.showInstallError === 'function') {
+                window.showInstallError(error.message);
+            } else {
+                showNotification('Installation failed: ' + error.message, 'error');
+            }
+            button.disabled = false;
+            button.innerHTML = originalText;
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    }
+</script>

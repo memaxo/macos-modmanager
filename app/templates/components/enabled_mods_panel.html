@@ -1,0 +1,97 @@
+<!-- Enabled Mods Panel -->
+<div class="card" style="padding: var(--space-4);">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3);">
+        <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--text-primary); display: flex; align-items: center; gap: var(--space-2); margin: 0;">
+            <i data-lucide="package" style="width: 1rem; height: 1rem; color: var(--accent-primary);"></i>
+            Enabled Mods
+        </h3>
+        <a href="/mods?status=enabled" class="btn-ghost" style="font-size: var(--text-xs); padding: var(--space-1);" title="View all mods">
+            <i data-lucide="external-link" style="width: 0.8rem; height: 0.8rem;"></i>
+        </a>
+    </div>
+    
+    <div id="enabled-mods-content"
+         hx-get="/api/mods/api?enabled_only=true"
+         hx-trigger="load, every 10s"
+         hx-swap="innerHTML"
+         style="max-height: 300px; overflow-y: auto;">
+        <div style="text-align: center; padding: var(--space-4); color: var(--text-secondary);">
+            <i data-lucide="loader-2" class="animate-spin" style="width: 1rem; height: 1rem;"></i>
+            Loading mods...
+        </div>
+    </div>
+</div>
+
+<script>
+document.body.addEventListener('htmx:afterSwap', function(event) {
+    if (event.detail.target.id === 'enabled-mods-content') {
+        const mods = JSON.parse(event.detail.xhr.response);
+        
+        if (!mods || mods.length === 0) {
+            event.detail.target.innerHTML = '<div style="text-align: center; padding: var(--space-4); color: var(--text-secondary); font-size: var(--text-sm);">No enabled mods</div>';
+            return;
+        }
+        
+        // Show count
+        const countHtml = `<div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-2);">${mods.length} mod${mods.length !== 1 ? 's' : ''} enabled</div>`;
+        
+        // Build mod list
+        const modsHtml = mods.slice(0, 10).map(mod => `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-2); background: var(--bg-primary); border-radius: var(--radius-md); margin-bottom: var(--space-1);">
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: var(--text-xs); font-weight: var(--font-medium); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        ${mod.name || 'Unknown Mod'}
+                    </div>
+                    <div style="font-size: 10px; color: var(--text-tertiary);">
+                        ${mod.version || ''} ${mod.mod_type ? '• ' + mod.mod_type : ''}
+                    </div>
+                </div>
+                <label class="toggle-switch" style="margin-left: var(--space-2);">
+                    <input 
+                        type="checkbox" 
+                        checked
+                        onchange="toggleMod(${mod.id}, this.checked);"
+                        style="display: none;">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        `).join('');
+        
+        const moreHtml = mods.length > 10 ? 
+            `<div style="text-align: center; padding: var(--space-2); font-size: var(--text-xs); color: var(--text-secondary);">
+                +${mods.length - 10} more mods
+            </div>` : '';
+        
+        event.detail.target.innerHTML = countHtml + modsHtml + moreHtml;
+        
+        // Re-initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+});
+
+function toggleMod(modId, enabled) {
+    fetch(`/api/mods/${modId}/toggle`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({enabled: enabled})
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Refresh mods list
+        htmx.trigger('#enabled-mods-content', 'refresh');
+        
+        // Show notification
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.textContent = data.message || (enabled ? 'Mod enabled' : 'Mod disabled');
+        document.getElementById('notification-area')?.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+    })
+    .catch(error => {
+        console.error('Error toggling mod:', error);
+        alert('Failed to toggle mod');
+    });
+}
+</script>

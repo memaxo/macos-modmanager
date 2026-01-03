@@ -1,0 +1,133 @@
+{% if macos_only or redscript_only %}
+<div style="margin-bottom: var(--space-4); padding: var(--space-3); background: var(--info-bg); border: 1px solid var(--info-border); border-radius: var(--radius-md); display: flex; align-items: center; gap: var(--space-2);">
+    <i data-lucide="info" style="width: 1rem; height: 1rem; color: var(--info-text);"></i>
+    <span style="font-size: var(--text-sm); color: var(--info-text);">
+        {% if macos_only and redscript_only %}
+        Showing only macOS-compatible redscript mods. Incompatible mods have been filtered out.
+        {% elif macos_only %}
+        Showing only macOS-compatible mods. Incompatible mods have been filtered out.
+        {% elif redscript_only %}
+        Showing only redscript mods. Non-redscript mods have been filtered out.
+        {% endif %}
+    </span>
+</div>
+{% endif %}
+
+<div class="discovery-grid">
+    {% for mod in mods %}
+    <div class="card" 
+         {% if loop.last and next_page %}
+         hx-get="/api/mods/discovery/search?page={{ next_page }}"
+         hx-trigger="revealed"
+         hx-swap="afterend"
+         hx-include="#nexus-search, #nexus-sort, #nexus-period, #adult-toggle, #macos-only-toggle, #redscript-only-toggle, #min-endorsements, #min-downloads, #page-size-select"
+         {% endif %}
+         style="display: flex; flex-direction: column; height: 100%; {% if mod.macos_compatible is not none and not mod.macos_compatible %}border: 2px solid var(--danger-border) !important; background: var(--danger-bg-subtle) !important; box-shadow: 0 0 0 1px var(--danger-border) inset;{% endif %}">
+        {% if mod.picture_url %}
+        <div style="aspect-ratio: 16/9; overflow: hidden; border-radius: var(--radius-md) var(--radius-md) 0 0; background: var(--bg-tertiary);">
+            <img src="{{ mod.picture_url }}" alt="{{ mod.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        {% else %}
+        <div style="aspect-ratio: 16/9; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-tertiary); color: var(--text-tertiary);">
+            <i data-lucide="image-off" style="width: 2rem; height: 2rem; margin-bottom: var(--space-2);"></i>
+            <span style="font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em;">No Preview</span>
+        </div>
+        {% endif %}
+        
+        <div style="padding: var(--space-4); flex-grow: 1; display: flex; flex-direction: column; position: relative;">
+            <button 
+                class="queue-btn"
+                hx-post="/api/mods/queue/add/{{ mod.mod_id }}"
+                hx-vals='{"name": "{{ mod.name | e }}", "author": "{{ mod.author | e }}", "thumbnail": "{{ mod.picture_url | e }}"}'
+                hx-swap="none"
+                title="Add to install queue"
+                style="position: absolute; top: var(--space-2); right: var(--space-2); background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: var(--radius-sm); color: var(--text-secondary); cursor: pointer; transition: all 0.2s; padding: 4px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="plus" style="width: 1rem; height: 1rem;"></i>
+            </button>
+            
+            <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); margin-bottom: var(--space-1); line-height: 1.2; padding-right: var(--space-6);">
+                {{ mod.name }}
+            </h3>
+            <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-2);">
+                by {{ mod.author }}
+            </p>
+            
+            {% if mod.macos_compatible is not none %}
+            <div style="margin-bottom: var(--space-3);">
+                {% if mod.macos_compatible %}
+                <span class="badge" style="background: var(--success-bg); color: var(--success-text); font-size: var(--text-xs); padding: 4px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; font-weight: var(--font-medium);">
+                    <i data-lucide="check-circle" style="width: 0.875rem; height: 0.875rem;"></i>
+                    macOS Compatible
+                </span>
+                {% else %}
+                <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+                    <span class="badge" style="background: var(--danger-bg); color: var(--danger-text); font-size: var(--text-xs); padding: 4px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; font-weight: var(--font-semibold); border: 1px solid var(--danger-border);">
+                        <i data-lucide="alert-triangle" style="width: 0.875rem; height: 0.875rem;"></i>
+                        ⚠️ Not macOS Compatible
+                    </span>
+                    {% if mod.macos_compatibility_reason %}
+                    <span style="font-size: var(--text-xs); color: var(--danger-text); padding-left: var(--space-1);">
+                        {{ mod.macos_compatibility_reason }}
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: var(--space-2);">
+                <button 
+                    class="btn btn-secondary" 
+                    style="padding: var(--space-1) var(--space-3); font-size: var(--text-sm); flex-grow: 1;"
+                    hx-get="/api/mods/discovery/{{ mod.mod_id }}/quick-view"
+                    hx-target="body"
+                    hx-swap="beforeend">
+                    Quick View
+                </button>
+                
+                {% if mod.is_locally_installed %}
+                    {% if mod.version_diff == "new" %}
+                    <button 
+                        class="btn btn-warning" 
+                        style="padding: var(--space-1) var(--space-3); font-size: var(--text-sm);"
+                        hx-post="/api/mods/nexus/{{ mod.mod_id }}"
+                        hx-swap="none"
+                        title="Update available (Local: v{{ mod.local_version }})"
+                        onclick="this.disabled=true; this.innerText='Updating...'">
+                        Update
+                    </button>
+                    {% else %}
+                    <span class="badge badge-success" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-3);">Installed</span>
+                    {% endif %}
+                {% else %}
+                    {% if mod.macos_compatible is not none and not mod.macos_compatible %}
+                    <button 
+                        class="btn btn-secondary" 
+                        style="padding: var(--space-1) var(--space-3); font-size: var(--text-sm); opacity: 0.6; cursor: not-allowed;"
+                        disabled
+                        title="This mod is not compatible with macOS">
+                        <i data-lucide="x-circle" style="width: 0.875rem; height: 0.875rem;"></i>
+                        Not Compatible
+                    </button>
+                    {% else %}
+                    <button 
+                        class="btn btn-primary" 
+                        style="padding: var(--space-1) var(--space-3); font-size: var(--text-sm);"
+                        hx-post="/api/mods/nexus/{{ mod.mod_id }}"
+                        hx-swap="none"
+                        onclick="this.disabled=true; this.innerText='Install'">
+                        Install
+                    </button>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    {% if not next_page %}
+    <div style="grid-column: 1 / -1; text-align: center; padding: var(--space-12); color: var(--text-secondary);">
+        <p>No mods found matching your search.</p>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>

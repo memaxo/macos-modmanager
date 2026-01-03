@@ -1,4 +1,5 @@
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any, TypedDict
+from app.config import settings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 from app.models.profile import ModProfile, ProfileMod
@@ -6,12 +7,25 @@ from app.models.mod import Mod
 from app.models.load_order import ModLoadOrder
 
 
+class ProfileModDict(TypedDict):
+    mod_id: int
+    name: str
+    enabled: bool
+    mod: Mod  # type: ignore[typeddict-item]
+
+
+class LoadOrderDict(TypedDict):
+    mod_id: int
+    mod_name: str
+    priority: int
+
+
 class ProfileManager:
     """Manage mod profiles and load order"""
     
-    def __init__(self, db: AsyncSession, game_id: str = "cyberpunk2077"):
+    def __init__(self, db: AsyncSession, game_id: Optional[str] = None):
         self.db = db
-        self.game_id = game_id
+        self.game_id = game_id or settings.game_id
     
     async def create_profile(
         self,
@@ -128,7 +142,7 @@ class ProfileManager:
             await self.db.delete(profile_mod)
             await self.db.commit()
     
-    async def get_profile_mods(self, profile_id: int) -> List[Dict]:
+    async def get_profile_mods(self, profile_id: int) -> List[ProfileModDict]:
         """Get all mods in a profile"""
         result = await self.db.execute(
             select(ProfileMod, Mod).join(Mod).where(
@@ -136,14 +150,14 @@ class ProfileManager:
             ).order_by(ProfileMod.id)
         )
         
-        mods = []
+        mods: List[ProfileModDict] = []
         for profile_mod, mod in result.all():
-            mods.append({
-                "mod_id": mod.id,
-                "name": mod.name,
-                "enabled": profile_mod.is_enabled,
-                "mod": mod
-            })
+            mods.append(ProfileModDict(
+                mod_id=mod.id,
+                name=mod.name,
+                enabled=profile_mod.is_enabled,
+                mod=mod
+            ))
         
         return mods
     
@@ -179,7 +193,7 @@ class ProfileManager:
     async def get_load_order(
         self,
         profile_id: Optional[int] = None
-    ) -> List[Dict]:
+    ) -> List[LoadOrderDict]:
         """Get load order for a profile"""
         query = select(ModLoadOrder, Mod).join(Mod).where(
             ModLoadOrder.game_id == self.game_id,
@@ -188,13 +202,13 @@ class ProfileManager:
         
         result = await self.db.execute(query)
         
-        load_order = []
+        load_order: List[LoadOrderDict] = []
         for load_order_entry, mod in result.all():
-            load_order.append({
-                "mod_id": mod.id,
-                "mod_name": mod.name,
-                "priority": load_order_entry.priority
-            })
+            load_order.append(LoadOrderDict(
+                mod_id=mod.id,
+                mod_name=mod.name,
+                priority=load_order_entry.priority
+            ))
         
         return load_order
     

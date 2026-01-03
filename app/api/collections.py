@@ -181,6 +181,279 @@ async def _import_collection(
             raise HTTPException(status_code=400, detail=str(e))
 
 
+# =====================================================
+# Nexus Collections Browser Endpoints
+# (Must be before /{collection_id} routes to avoid path conflicts)
+# =====================================================
+
+@router.get("/browse", response_class=HTMLResponse)
+async def browse_nexus_collections_page(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """Browse Nexus collections - main page"""
+    from app.config import settings
+    
+    return templates.TemplateResponse("collections/nexus_browser.html", {
+        "request": request,
+        "game_domain": settings.game_domain or "cyberpunk2077"
+    })
+
+
+@router.get("/preview-by-url", response_class=HTMLResponse)
+async def preview_collection_by_url(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """Preview a collection by URL with macOS compatibility check"""
+    from app.config import settings
+    from app.core.compatibility import CompatibilityChecker
+    
+    # Get URL from query params (sent as form input value via hx-include)
+    url = request.query_params.get("collection-url-input", "") or request.query_params.get("url", "")
+    
+    if not url:
+        return """
+        <div class="modal-overlay" onclick="this.remove()">
+            <div class="modal" onclick="event.stopPropagation()" style="max-width: 500px; padding: var(--space-6);">
+                <div style="text-align: center;">
+                    <i data-lucide="alert-circle" style="width: 3rem; height: 3rem; color: var(--warning-text); margin-bottom: var(--space-4);"></i>
+                    <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); margin-bottom: var(--space-2);">No URL Provided</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">Please paste a Nexus Mods collection URL to preview.</p>
+                    <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+                </div>
+            </div>
+        </div>
+        <script>if (typeof lucide !== 'undefined') lucide.createIcons();</script>
+        """
+    
+    async with NexusAPIClient() as nexus:
+        try:
+            # Parse collection URL
+            game_domain, collection_slug = await nexus.parse_collection_url(url)
+            
+            # Get collection data
+            collection_data = await nexus.get_collection(collection_slug, game_domain)
+            
+            if not collection_data:
+                return f"""
+                <div class="modal-overlay" onclick="this.remove()">
+                    <div class="modal" onclick="event.stopPropagation()" style="max-width: 500px; padding: var(--space-6);">
+                        <div style="text-align: center;">
+                            <i data-lucide="x-circle" style="width: 3rem; height: 3rem; color: var(--error-text); margin-bottom: var(--space-4);"></i>
+                            <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); margin-bottom: var(--space-2);">Collection Not Found</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">Could not find collection at: {url}</p>
+                            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+                        </div>
+                    </div>
+                </div>
+                <script>if (typeof lucide !== 'undefined') lucide.createIcons();</script>
+                """
+            
+            # Get mods from revision
+            revision = collection_data.get("latestPublishedRevision") or collection_data.get("currentRevision")
+            mods = revision.get("mods", []) if revision else []
+            
+            # Check compatibility for each mod
+            compatibility_checker = CompatibilityChecker()
+            mods_with_compat = []
+            compatible_count = 0
+            incompatible_count = 0
+            unknown_count = 0
+            
+            for mod_entry in mods:
+                mod_info = mod_entry.get("mod", {})
+                nexus_mod_id = mod_info.get("nexusModId")
+                
+                # Check compatibility based on summary/description
+                compat_status = "unknown"
+                compat_reason = ""
+                
+                if nexus_mod_id:
+                    try:
+                        # Use metadata-based compatibility check
+                        compat_result = await compatibility_checker.check_nexus_metadata(
+                            nexus, game_domain, nexus_mod_id
+                        )
+                        if compat_result.compatible:
+                            compat_status = "compatible"
+                            compatible_count += 1
+                        else:
+                            compat_status = "incompatible"
+                            compat_reason = compat_result.reason
+                            incompatible_count += 1
+                    except Exception:
+                        # Fall back to text-based check on summary
+                        summary = mod_info.get("summary", "")
+                        requirements = compatibility_checker.extract_requirements_from_text(summary)
+                        if requirements:
+                            compat_status = "incompatible"
+                            compat_reason = f"Requires {', '.join(requirements)}"
+                            incompatible_count += 1
+                        else:
+                            compat_status = "likely_compatible"
+                            compatible_count += 1
+                else:
+                    unknown_count += 1
+                
+                mods_with_compat.append({
+                    **mod_entry,
+                    "compat_status": compat_status,
+                    "compat_reason": compat_reason
+                })
+            
+            # Calculate overall compatibility
+            total_mods = len(mods)
+            overall_compat = "compatible" if incompatible_count == 0 else ("mixed" if compatible_count > 0 else "incompatible")
+            
+            return templates.TemplateResponse("collections/preview_with_compat.html", {
+                "request": request,
+                "collection": collection_data,
+                "game_domain": game_domain,
+                "mods_with_compat": mods_with_compat,
+                "compatible_count": compatible_count,
+                "incompatible_count": incompatible_count,
+                "unknown_count": unknown_count,
+                "total_mods": total_mods,
+                "overall_compat": overall_compat,
+                "original_url": url
+            })
+            
+        except NexusAPIError as e:
+            return f"""
+            <div class="modal-overlay" onclick="this.remove()">
+                <div class="modal" onclick="event.stopPropagation()" style="max-width: 500px; padding: var(--space-6);">
+                    <div style="text-align: center;">
+                        <i data-lucide="alert-triangle" style="width: 3rem; height: 3rem; color: var(--warning-text); margin-bottom: var(--space-4);"></i>
+                        <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); margin-bottom: var(--space-2);">Error Loading Collection</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">{str(e)}</p>
+                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+                    </div>
+                </div>
+            </div>
+            <script>if (typeof lucide !== 'undefined') lucide.createIcons();</script>
+            """
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return f"""
+            <div class="modal-overlay" onclick="this.remove()">
+                <div class="modal" onclick="event.stopPropagation()" style="max-width: 500px; padding: var(--space-6);">
+                    <div style="text-align: center;">
+                        <i data-lucide="x-circle" style="width: 3rem; height: 3rem; color: var(--error-text); margin-bottom: var(--space-4);"></i>
+                        <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); margin-bottom: var(--space-2);">Unexpected Error</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">{str(e)}</p>
+                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+                    </div>
+                </div>
+            </div>
+            <script>if (typeof lucide !== 'undefined') lucide.createIcons();</script>
+            """
+
+
+@router.get("/browse/search", response_class=HTMLResponse)
+async def browse_nexus_collections_search(
+    request: Request,
+    sort: str = Query("downloads"),  # downloads, endorsements, trending, updated
+    page: int = Query(1),
+    page_size: int = Query(20),
+    include_adult: bool = Query(False),
+    game_domain: str = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """Search Nexus collections with pagination"""
+    from app.config import settings
+    
+    if not settings.nexus_api_key:
+        return templates.TemplateResponse("components/toast.html", {
+            "request": request,
+            "message": "Nexus API key not configured",
+            "type": "error"
+        })
+    
+    game = game_domain or settings.game_domain or "cyberpunk2077"
+    offset = (page - 1) * page_size
+    
+    async with NexusAPIClient() as nexus:
+        try:
+            results = await nexus.search_collections(
+                game_domain=game,
+                sort_by=sort,
+                count=page_size,
+                offset=offset
+            )
+            
+            # Check for API errors
+            if results.get("error"):
+                return f'<div style="text-align: center; padding: 2rem; color: var(--warning-text); background: var(--warning-bg); border-radius: var(--radius-md); margin: var(--space-4);"><p style="margin-bottom: 0.5rem;"><strong>API Error:</strong></p><p>{results.get("error")}</p><p style="margin-top: 1rem; font-size: var(--text-sm); color: var(--text-secondary);">The Nexus Mods Collections API may require OAuth authentication or be temporarily unavailable.</p></div>'
+            
+            collections = results.get("results", [])
+            total = results.get("total", 0)
+            
+            # Filter adult content if not requested
+            if not include_adult:
+                collections = [c for c in collections if not c.get("adult_content", False)]
+            
+            has_more = (offset + len(collections)) < total
+            
+            return templates.TemplateResponse("collections/nexus_results.html", {
+                "request": request,
+                "collections": collections,
+                "next_page": page + 1 if has_more else None,
+                "has_more": has_more,
+                "sort": sort,
+                "game_domain": game,
+                "total": total
+            })
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return f'<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">Error loading collections: {str(e)}</div>'
+
+
+@router.get("/browse/{collection_slug}/preview", response_class=HTMLResponse)
+async def preview_nexus_collection(
+    collection_slug: str,
+    request: Request,
+    game_domain: str = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """Preview a Nexus collection before importing"""
+    from app.config import settings
+    
+    game = game_domain or settings.game_domain or "cyberpunk2077"
+    
+    async with NexusAPIClient() as nexus:
+        try:
+            # Get full collection details
+            collection_data = await nexus.get_collection(collection_slug, game)
+            
+            if not collection_data:
+                return templates.TemplateResponse("components/toast.html", {
+                    "request": request,
+                    "message": "Collection not found",
+                    "type": "error"
+                })
+            
+            return templates.TemplateResponse("collections/preview_modal.html", {
+                "request": request,
+                "collection": collection_data,
+                "game_domain": game
+            })
+            
+        except Exception as e:
+            return templates.TemplateResponse("components/toast.html", {
+                "request": request,
+                "message": f"Error loading collection: {str(e)}",
+                "type": "error"
+            })
+
+
+# =====================================================
+# Collection Management Endpoints (with path params)
+# =====================================================
+
 @router.post("/{collection_id}/install", response_class=HTMLResponse)
 async def install_collection_html(
     collection_id: int,

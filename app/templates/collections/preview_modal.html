@@ -1,0 +1,184 @@
+<div class="modal-overlay" onclick="this.remove()">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h2 style="font-size: var(--text-xl); font-weight: var(--font-bold);">
+                {{ collection.name or 'Collection Preview' }}
+            </h2>
+            <button class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()" style="padding: var(--space-1);">
+                <i data-lucide="x" style="width: 1.25rem; height: 1.25rem;"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            {% if collection.headerImage or collection.tileImage %}
+            <div style="aspect-ratio: 21/9; overflow: hidden; border-radius: var(--radius-md); margin-bottom: var(--space-4); background: var(--bg-tertiary);">
+                <img src="{{ collection.headerImage.url if collection.headerImage else collection.tileImage.url }}" 
+                     alt="{{ collection.name }}" 
+                     style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            {% endif %}
+            
+            <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                {% if collection.user %}
+                <div style="display: flex; align-items: center; gap: var(--space-2);">
+                    {% if collection.user.avatar %}
+                    <img src="{{ collection.user.avatar }}" alt="" style="width: 32px; height: 32px; border-radius: 50%;">
+                    {% endif %}
+                    <span style="font-size: var(--text-sm); color: var(--text-secondary);">
+                        by <strong>{{ collection.user.name }}</strong>
+                    </span>
+                </div>
+                {% endif %}
+                
+                {% if collection.category %}
+                <span class="badge" style="background: var(--bg-tertiary); color: var(--text-secondary);">
+                    {{ collection.category.name }}
+                </span>
+                {% endif %}
+            </div>
+            
+            {% if collection.summary %}
+            <p style="color: var(--text-secondary); margin-bottom: var(--space-4); line-height: 1.6;">
+                {{ collection.summary }}
+            </p>
+            {% endif %}
+            
+            <!-- Stats -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-6); padding: var(--space-4); background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                <div style="text-align: center;">
+                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--accent-primary);">
+                        {{ collection.latestPublishedRevision.modCount if collection.latestPublishedRevision else 0 }}
+                    </div>
+                    <div style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase;">Mods</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--text-primary);">
+                        {% if collection.totalDownloads >= 1000 %}
+                            {{ "%.1f"|format(collection.totalDownloads / 1000) }}K
+                        {% else %}
+                            {{ collection.totalDownloads or 0 }}
+                        {% endif %}
+                    </div>
+                    <div style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase;">Downloads</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--text-primary);">
+                        {{ collection.endorsements or 0 }}
+                    </div>
+                    <div style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase;">Endorsements</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--text-primary);">
+                        v{{ collection.latestPublishedRevision.revisionNumber if collection.latestPublishedRevision else 1 }}
+                    </div>
+                    <div style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase;">Revision</div>
+                </div>
+            </div>
+            
+            <!-- Mod List Preview -->
+            {% if collection.latestPublishedRevision and collection.latestPublishedRevision.mods %}
+            <div style="margin-bottom: var(--space-4);">
+                <h3 style="font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--text-secondary); text-transform: uppercase; margin-bottom: var(--space-3);">
+                    Included Mods
+                </h3>
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-primary); border-radius: var(--radius-md);">
+                    {% for mod_entry in collection.latestPublishedRevision.mods[:20] %}
+                    <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border-primary);">
+                        <i data-lucide="package" style="width: 1rem; height: 1rem; color: var(--text-tertiary); flex-shrink: 0;"></i>
+                        <span style="font-size: var(--text-sm); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ mod_entry.mod.name if mod_entry.mod else 'Unknown Mod' }}
+                        </span>
+                        {% if mod_entry.isRequired %}
+                        <span class="badge" style="background: var(--warning-bg); color: var(--warning-text); font-size: 10px; padding: 2px 6px;">Required</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% if collection.latestPublishedRevision.mods|length > 20 %}
+                    <div style="padding: var(--space-2) var(--space-3); text-align: center; font-size: var(--text-xs); color: var(--text-tertiary);">
+                        + {{ collection.latestPublishedRevision.mods|length - 20 }} more mods
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">
+                Cancel
+            </button>
+            <a href="https://next.nexusmods.com/{{ game_domain }}/collections/{{ collection.slug }}" 
+               target="_blank"
+               class="btn btn-secondary">
+                <i data-lucide="external-link" style="width: 1rem; height: 1rem;"></i>
+                View on Nexus
+            </a>
+            <button class="btn btn-primary"
+                    hx-post="/api/collections/import"
+                    hx-vals='{"url": "https://next.nexusmods.com/{{ game_domain }}/collections/{{ collection.slug }}"}'
+                    hx-swap="none"
+                    onclick="this.disabled=true; this.innerHTML='Importing...';">
+                <i data-lucide="download" style="width: 1rem; height: 1rem;"></i>
+                Import Collection
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: var(--space-4);
+        animation: fadeIn 0.2s ease;
+    }
+    
+    .modal {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        width: 100%;
+        animation: slideUp 0.2s ease;
+    }
+    
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--space-4);
+        border-bottom: 1px solid var(--border-primary);
+    }
+    
+    .modal-body {
+        padding: var(--space-4);
+    }
+    
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--space-2);
+        padding: var(--space-4);
+        border-top: 1px solid var(--border-primary);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+
+<script>
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+</script>

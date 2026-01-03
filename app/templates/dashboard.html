@@ -5,7 +5,7 @@
     <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
         Dashboard
     </h1>
-    <p style="color: var(--text-secondary);">Overview of your mod installation</p>
+    <p style="color: var(--text-secondary);">Cyberpunk 2077 Mod Manager for macOS</p>
 </div>
 
 <!-- Stats Cards -->
@@ -25,33 +25,196 @@
     {% set change = None %}
     {% include "components/stats_card.html" %}
     
-    {% set value = stats.updates_available %}
-    {% set label = "Updates Available" %}
+    {% set value = stats.total_size_gb %}
+    {% set label = "Disk Usage (GB)" %}
     {% set change = None %}
     {% include "components/stats_card.html" %}
 </div>
 
-<!-- Quick Actions -->
-<div style="margin-bottom: var(--space-8);">
-    <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4);">
-        Quick Actions
-    </h2>
-    <div style="display: flex; gap: var(--space-4); flex-wrap: wrap;">
-        <a href="/mods/install" class="btn btn-primary">
-            Install Mod
-        </a>
-        <a href="/collections/import" class="btn btn-secondary">
-            Import Collection
-        </a>
-        <button 
-            class="btn btn-secondary"
-            hx-post="/api/updates/check"
-            hx-target="#notification-area"
-            hx-swap="beforeend">
-            Check for Updates
-        </button>
+<!-- Framework Status Panel -->
+<div id="framework-panel" 
+     hx-get="/api/frameworks/panel" 
+     hx-trigger="load"
+     hx-swap="innerHTML">
+    <div class="card" style="padding: var(--space-6); margin-bottom: var(--space-6);">
+        <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+            <i data-lucide="loader-2" class="animate-spin" style="width: 2rem; height: 2rem;"></i>
+            <div style="margin-top: var(--space-2);">Loading framework status...</div>
+        </div>
     </div>
 </div>
+
+<!-- Game Status Panel -->
+<div id="game-panel" 
+     hx-get="/api/frameworks/game-panel" 
+     hx-trigger="load, every 10s"
+     hx-swap="innerHTML">
+    <div class="card" style="padding: var(--space-6); margin-bottom: var(--space-6);">
+        <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+            <i data-lucide="loader-2" class="animate-spin" style="width: 2rem; height: 2rem;"></i>
+            <div style="margin-top: var(--space-2);">Loading game status...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Analytics and Actions Grid -->
+<div class="dashboard-grid">
+    <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+        <!-- Active Profile Card -->
+        <div class="card" style="padding: var(--space-4); display: flex; align-items: center; justify-content: space-between; background: linear-gradient(to right, var(--bg-secondary), var(--bg-tertiary)); border-left: 4px solid var(--accent-primary);">
+            <div style="display: flex; align-items: center; gap: var(--space-4);">
+                <div style="width: 40px; height: 40px; border-radius: var(--radius-full); background: rgba(72, 61, 139, 0.1); display: flex; align-items: center; justify-content: center; color: var(--accent-primary);">
+                    <i data-lucide="user" style="width: 20px; height: 20px;"></i>
+                </div>
+                <div>
+                    <div style="font-size: var(--text-xs); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Active Profile</div>
+                    <div style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-primary);">
+                        {{ current_profile.name if current_profile else "Default" }}
+                    </div>
+                </div>
+            </div>
+            <a href="/profiles" class="btn btn-ghost" style="padding: var(--space-2);" title="Manage Profiles">
+                <i data-lucide="external-link" style="width: 1.1rem; height: 1.1rem;"></i>
+            </a>
+        </div>
+
+        <!-- Recent Collections -->
+        {% if recent_collections %}
+        <div class="card" style="padding: var(--space-6);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+                <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: var(--space-2);">
+                    <i data-lucide="library" style="width: 1.2rem; height: 1.2rem; color: var(--accent-info);"></i>
+                    Recent Collections
+                </h2>
+                <a href="/collections" class="btn-ghost" style="font-size: var(--text-sm);">View All</a>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-4);">
+                {% for col in recent_collections %}
+                <a href="/collections/{{ col.id }}" style="text-decoration: none;">
+                    <div class="card" style="padding: var(--space-3); background: var(--bg-primary); height: 100%;">
+                        <div style="font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-1); font-size: var(--text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ col.name }}
+                        </div>
+                        <div style="font-size: 10px; color: var(--text-secondary);">
+                            {{ col.mod_count }} mods • by {{ col.author }}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Mod Distribution -->
+        <div class="card" style="padding: var(--space-6);">
+            <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-6); display: flex; align-items: center; gap: var(--space-2);">
+                <i data-lucide="pie-chart" style="width: 1.2rem; height: 1.2rem; color: var(--accent-primary);"></i>
+                Mod Distribution
+            </h2>
+            <div style="height: 250px; position: relative;">
+                <canvas id="modChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+        <div class="card" style="padding: var(--space-6);">
+            <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4); display: flex; align-items: center; gap: var(--space-2);">
+                <i data-lucide="zap" style="width: 1.2rem; height: 1.2rem; color: var(--accent-warning);"></i>
+                Quick Actions
+            </h2>
+            <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <button 
+                    id="launch-button"
+                    class="btn btn-primary"
+                    style="background: var(--accent-primary); border: none; justify-content: center; gap: var(--space-2);"
+                    hx-post="/api/launcher/launch"
+                    hx-target="body"
+                    hx-swap="none"
+                    onclick="handleLaunchClick(this);">
+                    <i data-lucide="play" style="width: 1.1rem; height: 1.1rem;"></i>
+                    Launch Game
+                </button>
+                <a href="/mods/explore" class="btn btn-secondary" style="justify-content: center; gap: var(--space-2);">
+                    <i data-lucide="search" style="width: 1.1rem; height: 1.1rem;"></i>
+                    Discover Mods
+                </a>
+                <a href="/mods/install" class="btn btn-secondary" style="justify-content: center; gap: var(--space-2);">
+                    <i data-lucide="plus-circle" style="width: 1.1rem; height: 1.1rem;"></i>
+                    Install Local Mod
+                </a>
+                <a href="/collections/import" class="btn btn-secondary" style="justify-content: center; gap: var(--space-2);">
+                    <i data-lucide="import" style="width: 1.1rem; height: 1.1rem;"></i>
+                    Import Collection pack
+                </a>
+                <button 
+                    class="btn btn-secondary"
+                    style="justify-content: center; gap: var(--space-2);"
+                    hx-post="/api/mods/updates/check"
+                    hx-target="#notification-area"
+                    hx-swap="beforeend">
+                    <i data-lucide="refresh-cw" style="width: 1.1rem; height: 1.1rem;"></i>
+                    Check Updates
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: var(--space-8);
+        margin-bottom: var(--space-8);
+    }
+
+    @media (max-width: 1024px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr 300px;
+            gap: var(--space-4);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .dashboard-grid > div:last-child {
+            order: -1;
+        }
+    }
+</style>
+
+<!-- Recent Collections -->
+{% if recent_collections %}
+<div style="margin-bottom: var(--space-8);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+        <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary);">
+            Recent Collections
+        </h2>
+        <a href="/collections" class="btn-ghost" style="font-size: var(--text-sm);">View All →</a>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-4);">
+        {% for collection in recent_collections %}
+        <div class="card" style="padding: var(--space-4); display: flex; align-items: center; gap: var(--space-4);">
+            <div style="width: 3rem; height: 3rem; border-radius: var(--radius-md); background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; color: var(--accent-info); flex-shrink: 0;">
+                <i data-lucide="library" style="width: 1.5rem; height: 1.5rem;"></i>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: var(--font-semibold); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ collection.name }}</div>
+                <div style="font-size: var(--text-xs); color: var(--text-tertiary);">{{ collection.mod_count }} mods • by {{ collection.author }}</div>
+            </div>
+            <a href="/collections/{{ collection.id }}" class="btn-ghost" style="padding: var(--space-2);">
+                <i data-lucide="chevron-right" style="width: 1.1rem; height: 1.1rem;"></i>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
 <!-- System Health -->
 <div style="margin-bottom: var(--space-8);">
@@ -76,10 +239,11 @@
         </h2>
         <button 
             class="btn-ghost"
+            style="display: flex; align-items: center; gap: var(--space-2);"
             hx-get="/api/dashboard/activity"
             hx-target="#activity-feed"
             hx-swap="innerHTML">
-            Refresh
+            <i data-lucide="refresh-cw" style="width: 0.9rem; height: 0.9rem;"></i> Refresh
         </button>
     </div>
     <div id="activity-feed" 
@@ -93,5 +257,43 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('modChart').getContext('2d');
+        const categories = {{ stats.categories | tojson }};
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: categories.map(c => c.type),
+                datasets: [{
+                    data: categories.map(c => c.count),
+                    backgroundColor: [
+                        '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#6366f1'
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#94a3b8',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    });
+</script>
 <script src="/static/js/dashboard.js"></script>
 {% endblock %}

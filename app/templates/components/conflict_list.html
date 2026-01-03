@@ -1,34 +1,54 @@
-<div class="card">
-    <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4);">
-        Conflicts ({{ conflicts|length }})
-    </h3>
-    
-    {% if conflicts %}
-    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+<div class="card" style="overflow: hidden;">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead style="background: var(--bg-tertiary); text-align: left;">
+            <tr>
+                <th style="padding: var(--space-3) var(--space-4); color: var(--text-secondary); font-size: var(--text-xs); text-transform: uppercase;">Type</th>
+                <th style="padding: var(--space-3) var(--space-4); color: var(--text-secondary); font-size: var(--text-xs); text-transform: uppercase;">Conflicting Mods</th>
+                <th style="padding: var(--space-3) var(--space-4); color: var(--text-secondary); font-size: var(--text-xs); text-transform: uppercase;">Affected File</th>
+                <th style="padding: var(--space-3) var(--space-4); color: var(--text-secondary); font-size: var(--text-xs); text-transform: uppercase;">Severity</th>
+                <th style="padding: var(--space-3) var(--space-4); color: var(--text-secondary); font-size: var(--text-xs); text-transform: uppercase; text-align: right;">Action</th>
+            </tr>
+        </thead>
+        <tbody style="color: var(--text-primary);">
         {% for conflict in conflicts %}
-        <div style="padding: var(--space-4); background: var(--bg-tertiary); border-radius: var(--radius-md); border-left: 3px solid {% if conflict.severity == 'critical' %}var(--accent-error){% elif conflict.severity == 'warning' %}var(--accent-warning){% else %}var(--accent-info){% endif %};">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--space-2);">
-                <div>
-                    <div style="color: var(--text-primary); font-weight: var(--font-medium); margin-bottom: var(--space-1);">
+            <tr style="border-top: 1px solid var(--border-primary);">
+                <td style="padding: var(--space-4);">
+                    <span class="badge" style="font-size: var(--text-xs); background: var(--bg-tertiary);">
                         {{ conflict.conflict_type|replace('_', ' ')|title }}
+                    </span>
+                </td>
+                <td style="padding: var(--space-4);">
+                    <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+                        <span style="font-weight: var(--font-medium);">{{ conflict.mod_name_1 }}</span>
+                        <span style="color: var(--text-secondary); font-size: var(--text-xs);">vs</span>
+                        <span style="font-weight: var(--font-medium);">{{ conflict.mod_name_2 }}</span>
                     </div>
-                    <div style="font-size: var(--text-sm); color: var(--text-secondary); font-family: monospace;">
-                        {{ conflict.file_path }}
-                    </div>
-                </div>
-                <span class="badge {% if conflict.severity == 'critical' %}badge-error{% elif conflict.severity == 'warning' %}badge-warning{% else %}badge-info{% endif %}">
+                </td>
+                <td style="padding: var(--space-4);">
+                    <code style="font-size: var(--text-sm); color: var(--accent-primary);">{{ conflict.file_path or 'N/A' }}</code>
+                </td>
+                <td style="padding: var(--space-4);">
+                    <span class="badge badge-{{ 'danger' if conflict.severity == 'critical' else 'warning' if conflict.severity == 'warning' else 'info' }}" style="font-size: var(--text-xs);">
                     {{ conflict.severity|title }}
                 </span>
-            </div>
-            <a href="/conflicts/{{ conflict.id }}" class="btn btn-secondary" style="font-size: var(--text-sm); padding: var(--space-1) var(--space-3);">
-                Resolve →
-            </a>
-        </div>
+                </td>
+                <td style="padding: var(--space-4); text-align: right;">
+                    <button class="btn btn-primary btn-sm"
+                            hx-get="/api/compatibility/conflicts/{{ conflict.id }}"
+                            hx-target="#modal-container"
+                            hx-trigger="click"
+                            onclick="document.getElementById('modal-container').style.display='block'">
+                        Resolve
+                    </button>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="padding: var(--space-12); text-align: center; color: var(--text-secondary);">
+                    No unresolved conflicts found.
+                </td>
+            </tr>
         {% endfor %}
-    </div>
-    {% else %}
-    <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
-        No conflicts detected
-    </div>
-    {% endif %}
+        </tbody>
+    </table>
 </div>

@@ -1,0 +1,600 @@
+<!-- Installation Progress Modal -->
+<div id="install-progress-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; align-items: center; justify-content: center; padding: var(--space-4);">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width: 800px; max-height: 90vh; overflow-y: auto; background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-xl); width: 100%; animation: slideUp 0.2s ease;">
+        <div style="padding: var(--space-4); border-bottom: 1px solid var(--border-primary); display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: var(--text-xl); font-weight: var(--font-bold); margin: 0; display: flex; align-items: center; gap: var(--space-2);">
+                <i data-lucide="package" style="width: 1.5rem; height: 1.5rem; color: var(--accent-primary);"></i>
+                Installing Mod
+            </h2>
+            <button class="btn btn-ghost" onclick="closeInstallProgress()" id="close-progress-btn" style="padding: var(--space-1); display: none;">
+                <i data-lucide="x" style="width: 1.25rem; height: 1.25rem;"></i>
+            </button>
+        </div>
+        
+        <div style="padding: var(--space-6);">
+            <!-- Mod Info -->
+            <div id="install-mod-info" style="margin-bottom: var(--space-6);">
+                <h3 id="install-mod-name" style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-2);">
+                    Loading...
+                </h3>
+                <div id="install-mod-meta" style="font-size: var(--text-sm); color: var(--text-secondary);">
+                    <span id="install-mod-version"></span>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div style="margin-bottom: var(--space-6);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
+                    <span id="install-status-text" style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-primary);">
+                        Initializing...
+                    </span>
+                    <span id="install-progress-percent" style="font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--accent-primary);">
+                        0%
+                    </span>
+                </div>
+                <div class="progress-bar-container" style="height: 12px; background: var(--bg-tertiary); border-radius: var(--radius-full); overflow: hidden; position: relative;">
+                    <div id="install-progress-fill" style="height: 100%; background: linear-gradient(90deg, var(--accent-primary), var(--accent-hover)); border-radius: var(--radius-full); transition: width 0.3s ease; width: 0%; position: relative;">
+                        <div class="progress-shine" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: progressShine 2s ease-in-out infinite;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stage Indicator -->
+            <div id="install-stages" style="display: flex; justify-content: space-between; margin-bottom: var(--space-6); padding: var(--space-4); background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                <div class="install-stage" data-stage="download">
+                    <div class="stage-icon">
+                        <i data-lucide="download-cloud" style="width: 1.5rem; height: 1.5rem;"></i>
+                    </div>
+                    <div class="stage-label">Download</div>
+                </div>
+                <div class="stage-connector"></div>
+                <div class="install-stage" data-stage="extract">
+                    <div class="stage-icon">
+                        <i data-lucide="archive" style="width: 1.5rem; height: 1.5rem;"></i>
+                    </div>
+                    <div class="stage-label">Extract</div>
+                </div>
+                <div class="stage-connector"></div>
+                <div class="install-stage" data-stage="install">
+                    <div class="stage-icon">
+                        <i data-lucide="hard-drive" style="width: 1.5rem; height: 1.5rem;"></i>
+                    </div>
+                    <div class="stage-label">Install</div>
+                </div>
+                <div class="stage-connector"></div>
+                <div class="install-stage" data-stage="verify">
+                    <div class="stage-icon">
+                        <i data-lucide="check-circle" style="width: 1.5rem; height: 1.5rem;"></i>
+                    </div>
+                    <div class="stage-label">Verify</div>
+                </div>
+            </div>
+            
+            <!-- Install Log -->
+            <div style="margin-bottom: var(--space-4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
+                    <h4 style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: var(--text-secondary); text-transform: uppercase;">
+                        <i data-lucide="terminal" style="width: 1rem; height: 1rem;"></i>
+                        Installation Log
+                    </h4>
+                    <button class="btn btn-ghost btn-sm" onclick="clearInstallLog()" style="padding: var(--space-1) var(--space-2); font-size: var(--text-xs);">
+                        <i data-lucide="trash-2" style="width: 0.875rem; height: 0.875rem;"></i>
+                        Clear
+                    </button>
+                </div>
+                <div id="install-log" style="background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: var(--radius-md); padding: var(--space-3); font-family: 'Monaco', 'Menlo', 'Courier New', monospace; font-size: var(--text-xs); max-height: 300px; overflow-y: auto; min-height: 150px;">
+                    <div class="log-entry" style="color: var(--text-secondary);">
+                        <span style="color: var(--text-tertiary);">[</span>
+                        <span id="log-timestamp" style="color: var(--text-tertiary);">00:00:00</span>
+                        <span style="color: var(--text-tertiary);">]</span>
+                        <span style="margin-left: var(--space-2);">Initializing installation...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Success/Error Message -->
+            <div id="install-result" style="display: none;">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Footer Actions -->
+        <div style="padding: var(--space-4); border-top: 1px solid var(--border-primary); display: flex; justify-content: flex-end; gap: var(--space-2);">
+            <button id="cancel-install-btn" class="btn btn-secondary" onclick="cancelInstall()" style="display: none;">
+                <i data-lucide="x" style="width: 1rem; height: 1rem;"></i>
+                Cancel
+            </button>
+            <button id="view-mods-btn" class="btn btn-primary" onclick="window.location.href='/mods'" style="display: none;">
+                <i data-lucide="package" style="width: 1rem; height: 1rem;"></i>
+                View Installed Mods
+            </button>
+            <button id="close-install-btn" class="btn btn-secondary" onclick="closeInstallProgress()" style="display: none;">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.progress-bar-container {
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progress-shine {
+    animation: progressShine 2s ease-in-out infinite;
+}
+
+@keyframes progressShine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+}
+
+.install-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    flex: 1;
+    opacity: 0.4;
+    transition: all var(--transition-base);
+}
+
+.install-stage.active {
+    opacity: 1;
+}
+
+.install-stage.active .stage-icon {
+    color: var(--accent-primary);
+    transform: scale(1.1);
+}
+
+.install-stage.completed .stage-icon {
+    color: var(--accent-success);
+}
+
+.install-stage.completed .stage-icon i {
+    animation: none;
+}
+
+.stage-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius-full);
+    background: var(--bg-primary);
+    border: 2px solid var(--border-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-base);
+    color: var(--text-tertiary);
+}
+
+.install-stage.active .stage-icon {
+    border-color: var(--accent-primary);
+    background: rgba(72, 61, 139, 0.1);
+    box-shadow: 0 0 20px rgba(72, 61, 139, 0.3);
+}
+
+.install-stage.completed .stage-icon {
+    border-color: var(--accent-success);
+    background: rgba(129, 184, 139, 0.1);
+}
+
+.stage-label {
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+    font-weight: var(--font-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.install-stage.active .stage-label {
+    color: var(--accent-primary);
+}
+
+.install-stage.completed .stage-label {
+    color: var(--accent-success);
+}
+
+.stage-connector {
+    flex: 1;
+    height: 2px;
+    background: var(--border-primary);
+    margin: 0 var(--space-2);
+    margin-bottom: 1.5rem;
+    transition: background var(--transition-base);
+}
+
+.stage-connector.active {
+    background: var(--accent-primary);
+}
+
+.log-entry {
+    margin-bottom: var(--space-1);
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+    word-wrap: break-word;
+    line-height: 1.5;
+}
+
+.log-entry.info {
+    color: var(--text-secondary);
+}
+
+.log-entry.success {
+    color: var(--accent-success);
+    background: rgba(129, 184, 139, 0.1);
+}
+
+.log-entry.error {
+    color: var(--accent-error);
+    background: rgba(195, 90, 90, 0.1);
+}
+
+.log-entry.warning {
+    color: var(--accent-warning);
+    background: rgba(226, 184, 91, 0.1);
+}
+
+.log-entry.debug {
+    color: var(--text-tertiary);
+}
+
+#install-result.success {
+    background: var(--success-bg);
+    border: 1px solid var(--success-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+#install-result.error {
+    background: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+#install-result.success .result-icon {
+    color: var(--success-text);
+}
+
+#install-result.error .result-icon {
+    color: var(--danger-text);
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+</style>
+
+<script>
+let installProgressInterval = null;
+let currentJobId = null;
+
+function showInstallProgress(modName, modVersion, jobId) {
+    currentJobId = jobId;
+    const modal = document.getElementById('install-progress-modal');
+    const modNameEl = document.getElementById('install-mod-name');
+    const modVersionEl = document.getElementById('install-mod-version');
+    const closeBtn = document.getElementById('close-progress-btn');
+    const cancelBtn = document.getElementById('cancel-install-btn');
+    
+    if (modNameEl) modNameEl.textContent = modName || 'Unknown Mod';
+    if (modVersionEl) modVersionEl.textContent = modVersion ? `Version ${modVersion}` : '';
+    if (modal) modal.style.display = 'flex';
+    if (closeBtn) closeBtn.style.display = 'none';
+    if (cancelBtn) cancelBtn.style.display = 'block';
+    
+    // Initialize icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+    
+    // Start polling for progress
+    startProgressPolling(jobId);
+}
+
+function startProgressPolling(jobId) {
+    if (installProgressInterval) {
+        clearInterval(installProgressInterval);
+    }
+    
+    // Add initial log entry
+    addLogEntry('info', 'Starting installation...');
+    
+    installProgressInterval = setInterval(() => {
+        fetch(`/api/mods/install/queue`)
+            .then(response => response.text())
+            .then(html => {
+                // Parse the queue HTML to find our job
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Try to find job by ID (format: nexus_{mod_id} or nexus_{mod_id}_{timestamp})
+                const jobIdBase = jobId.split('_').slice(0, 2).join('_'); // Get "nexus_{mod_id}"
+                const jobElement = doc.querySelector(`[data-job-id="${jobIdBase}"]`) || 
+                                 doc.querySelector(`[data-job-id^="${jobIdBase}"]`);
+                
+                if (jobElement) {
+                    updateInstallProgress(jobElement, jobIdBase);
+                } else {
+                    // Job might be completed, check completed section
+                    checkJobCompletion(jobIdBase);
+                }
+            })
+            .catch(error => {
+                console.error('Error polling install progress:', error);
+                addLogEntry('error', `Error checking progress: ${error.message}`);
+            });
+    }, 1000); // Poll every second
+}
+
+function updateInstallProgress(jobElement, jobId) {
+    // Extract progress info from the job element
+    const progressBar = jobElement.querySelector('.queue-progress-fill');
+    const progressPercent = jobElement.querySelector('.progress-percent');
+    const statusText = jobElement.querySelector('.queue-item-status');
+    const stages = jobElement.querySelectorAll('.stage');
+    
+    if (progressBar) {
+        const width = progressBar.style.width || '0%';
+        const percent = parseInt(width);
+        updateProgressBar(percent);
+    }
+    
+    if (statusText) {
+        const status = statusText.textContent.trim();
+        updateStatusText(status);
+        updateStages(status);
+    }
+    
+    // Add log entries based on status changes
+    const currentStatus = getCurrentStatus();
+    if (currentStatus !== statusText.textContent.trim()) {
+        addLogEntry('info', `Status: ${statusText.textContent.trim()}`);
+    }
+}
+
+function checkJobCompletion(jobId) {
+    fetch(`/api/mods/install/queue`)
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Check completed section - look for job name match
+            const completedItems = doc.querySelectorAll('.completed-item');
+            let found = false;
+            
+            completedItems.forEach(item => {
+                const itemName = item.querySelector('.completed-name')?.textContent;
+                const modNameEl = document.getElementById('install-mod-name');
+                const modName = modNameEl ? modNameEl.textContent : '';
+                
+                // Match by name or check if it's a success/failure
+                if (itemName && modName && (itemName.includes(modName) || modName.includes(itemName))) {
+                    found = true;
+                    if (item.classList.contains('success')) {
+                        showInstallSuccess();
+                    } else if (item.classList.contains('failed')) {
+                        const errorText = item.querySelector('.completed-error')?.textContent || 'Installation failed';
+                        showInstallError(errorText);
+                    }
+                    stopProgressPolling();
+                }
+            });
+            
+            // Also check if no active jobs and we've been polling for a while
+            const activeJobs = doc.querySelectorAll('.queue-item');
+            if (activeJobs.length === 0 && !found) {
+                // Assume success if no active jobs after reasonable time
+                setTimeout(() => {
+                    if (!found) {
+                        showInstallSuccess();
+                        stopProgressPolling();
+                    }
+                }, 2000);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking completion:', error);
+        });
+}
+
+function updateProgressBar(percent) {
+    const fill = document.getElementById('install-progress-fill');
+    const percentEl = document.getElementById('install-progress-percent');
+    
+    if (fill) fill.style.width = `${percent}%`;
+    if (percentEl) percentEl.textContent = `${percent}%`;
+}
+
+function updateStatusText(status) {
+    const statusEl = document.getElementById('install-status-text');
+    if (statusEl) statusEl.textContent = status;
+}
+
+function updateStages(status) {
+    const stages = {
+        'downloading': 'download',
+        'extracting': 'extract',
+        'installing': 'install',
+        'verifying': 'verify'
+    };
+    
+    // Reset all stages
+    document.querySelectorAll('.install-stage').forEach(stage => {
+        stage.classList.remove('active', 'completed');
+    });
+    document.querySelectorAll('.stage-connector').forEach(connector => {
+        connector.classList.remove('active');
+    });
+    
+    // Activate current stage
+    let currentStageFound = false;
+    for (const [key, stageName] of Object.entries(stages)) {
+        const stage = document.querySelector(`.install-stage[data-stage="${stageName}"]`);
+        const connector = stage?.previousElementSibling;
+        
+        if (status.toLowerCase().includes(key)) {
+            if (stage) {
+                stage.classList.add('active');
+                currentStageFound = true;
+            }
+            break;
+        } else if (currentStageFound || status.toLowerCase().includes('completed')) {
+            if (stage) stage.classList.add('completed');
+            if (connector && connector.classList.contains('stage-connector')) {
+                connector.classList.add('active');
+            }
+        }
+    }
+}
+
+function addLogEntry(level, message) {
+    const log = document.getElementById('install-log');
+    if (!log) return;
+    
+    const timestamp = new Date().toLocaleTimeString();
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${level}`;
+    entry.innerHTML = `
+        <span style="color: var(--text-tertiary);">[</span>
+        <span style="color: var(--text-tertiary);">${timestamp}</span>
+        <span style="color: var(--text-tertiary);">]</span>
+        <span style="margin-left: var(--space-2);">${escapeHtml(message)}</span>
+    `;
+    
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+}
+
+function showInstallSuccess() {
+    const resultEl = document.getElementById('install-result');
+    const cancelBtn = document.getElementById('cancel-install-btn');
+    const viewModsBtn = document.getElementById('view-mods-btn');
+    const closeBtn = document.getElementById('close-install-btn');
+    
+    if (resultEl) {
+        resultEl.className = 'success';
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = `
+            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                <i data-lucide="check-circle" class="result-icon" style="width: 2rem; height: 2rem;"></i>
+                <div>
+                    <h4 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--success-text); margin-bottom: var(--space-1);">
+                        Installation Successful!
+                    </h4>
+                    <p style="color: var(--text-secondary); font-size: var(--text-sm);">
+                        The mod has been installed successfully and is ready to use.
+                    </p>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    if (viewModsBtn) viewModsBtn.style.display = 'block';
+    if (closeBtn) closeBtn.style.display = 'block';
+    
+    addLogEntry('success', 'Installation completed successfully!');
+    updateProgressBar(100);
+    updateStatusText('Completed');
+    
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+    
+    // Auto-redirect after 3 seconds
+    setTimeout(() => {
+        window.location.href = '/mods';
+    }, 3000);
+}
+
+function showInstallError(errorMessage) {
+    const resultEl = document.getElementById('install-result');
+    const cancelBtn = document.getElementById('cancel-install-btn');
+    const closeBtn = document.getElementById('close-install-btn');
+    
+    if (resultEl) {
+        resultEl.className = 'error';
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = `
+            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                <i data-lucide="x-circle" class="result-icon" style="width: 2rem; height: 2rem;"></i>
+                <div>
+                    <h4 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--danger-text); margin-bottom: var(--space-1);">
+                        Installation Failed
+                    </h4>
+                    <p style="color: var(--text-secondary); font-size: var(--text-sm);">
+                        ${escapeHtml(errorMessage)}
+                    </p>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    if (closeBtn) closeBtn.style.display = 'block';
+    
+    addLogEntry('error', `Installation failed: ${errorMessage}`);
+    updateStatusText('Failed');
+    
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+function cancelInstall() {
+    if (currentJobId) {
+        fetch(`/api/mods/install/cancel/${currentJobId}`, { method: 'DELETE' })
+            .then(() => {
+                addLogEntry('warning', 'Installation cancelled by user');
+                stopProgressPolling();
+                closeInstallProgress();
+            });
+    }
+}
+
+function closeInstallProgress() {
+    stopProgressPolling();
+    const modal = document.getElementById('install-progress-modal');
+    if (modal) modal.style.display = 'none';
+    currentJobId = null;
+}
+
+function clearInstallLog() {
+    const log = document.getElementById('install-log');
+    if (log) log.innerHTML = '';
+}
+
+function stopProgressPolling() {
+    if (installProgressInterval) {
+        clearInterval(installProgressInterval);
+        installProgressInterval = null;
+    }
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+let currentStatus = '';
+function getCurrentStatus() {
+    return currentStatus;
+}
+
+// Make functions globally available
+window.showInstallProgress = showInstallProgress;
+window.closeInstallProgress = closeInstallProgress;
+window.cancelInstall = cancelInstall;
+window.clearInstallLog = clearInstallLog;
+window.addLogEntry = addLogEntry;
+window.showInstallError = showInstallError;
+</script>

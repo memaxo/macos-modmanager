@@ -1,0 +1,284 @@
+<div class="modal-overlay" onclick="this.remove()">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h2 style="font-size: var(--text-xl); font-weight: var(--font-bold); display: flex; align-items: center; gap: var(--space-3);">
+                {{ collection.name or 'Collection Preview' }}
+                {% if overall_compat == 'compatible' %}
+                <span class="badge badge-success" style="font-size: var(--text-xs);">
+                    <i data-lucide="check-circle" style="width: 0.75rem; height: 0.75rem;"></i>
+                    macOS Compatible
+                </span>
+                {% elif overall_compat == 'mixed' %}
+                <span class="badge badge-warning" style="font-size: var(--text-xs);">
+                    <i data-lucide="alert-triangle" style="width: 0.75rem; height: 0.75rem;"></i>
+                    Partial Compatibility
+                </span>
+                {% else %}
+                <span class="badge badge-error" style="font-size: var(--text-xs);">
+                    <i data-lucide="x-circle" style="width: 0.75rem; height: 0.75rem;"></i>
+                    Compatibility Issues
+                </span>
+                {% endif %}
+            </h2>
+            <button class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()" style="padding: var(--space-1);">
+                <i data-lucide="x" style="width: 1.25rem; height: 1.25rem;"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            {% if collection.headerImage or collection.tileImage %}
+            <div style="aspect-ratio: 21/9; overflow: hidden; border-radius: var(--radius-md); margin-bottom: var(--space-4); background: var(--bg-tertiary);">
+                <img src="{{ collection.headerImage.url if collection.headerImage else collection.tileImage.url }}" 
+                     alt="{{ collection.name }}" 
+                     style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            {% endif %}
+            
+            <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
+                {% if collection.author %}
+                <div style="display: flex; align-items: center; gap: var(--space-2);">
+                    <span style="font-size: var(--text-sm); color: var(--text-secondary);">
+                        by <strong>{{ collection.author.name }}</strong>
+                    </span>
+                </div>
+                {% endif %}
+                
+                {% if collection.game %}
+                <span class="badge" style="background: var(--bg-tertiary); color: var(--text-secondary);">
+                    {{ collection.game.name }}
+                </span>
+                {% endif %}
+            </div>
+            
+            {% if collection.summary %}
+            <p style="color: var(--text-secondary); margin-bottom: var(--space-4); line-height: 1.6;">
+                {{ collection.summary }}
+            </p>
+            {% endif %}
+            
+            <!-- Stats -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-6); padding: var(--space-4); background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                <div style="text-align: center;">
+                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--accent-primary);">
+                        {{ total_mods }}
+                    </div>
+                    <div style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase;">Total Mods</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--success-text);">
+                        {{ compatible_count }}
+                    </div>
+                    <div style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase;">Compatible</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--error-text);">
+                        {{ incompatible_count }}
+                    </div>
+                    <div style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase;">Incompatible</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--text-primary);">
+                        {% if collection.totalDownloads >= 1000 %}
+                            {{ "%.1f"|format(collection.totalDownloads / 1000) }}K
+                        {% else %}
+                            {{ collection.totalDownloads or 0 }}
+                        {% endif %}
+                    </div>
+                    <div style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase;">Downloads</div>
+                </div>
+            </div>
+            
+            <!-- Compatibility Warning -->
+            {% if incompatible_count > 0 %}
+            <div style="background: var(--warning-bg); border: 1px solid var(--warning-text); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4); display: flex; align-items: flex-start; gap: var(--space-3);">
+                <i data-lucide="alert-triangle" style="width: 1.25rem; height: 1.25rem; color: var(--warning-text); flex-shrink: 0; margin-top: 2px;"></i>
+                <div>
+                    <p style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: var(--warning-text); margin-bottom: var(--space-1);">
+                        {{ incompatible_count }} mod{% if incompatible_count > 1 %}s{% endif %} may not be compatible with macOS
+                    </p>
+                    <p style="font-size: var(--text-xs); color: var(--text-secondary);">
+                        These mods may require Windows-only dependencies (RED4ext, CET, etc.) that don't work on macOS.
+                        You can still import the collection, but these mods may not function correctly.
+                    </p>
+                </div>
+            </div>
+            {% else %}
+            <div style="background: var(--success-bg); border: 1px solid var(--success-text); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4); display: flex; align-items: flex-start; gap: var(--space-3);">
+                <i data-lucide="check-circle" style="width: 1.25rem; height: 1.25rem; color: var(--success-text); flex-shrink: 0; margin-top: 2px;"></i>
+                <div>
+                    <p style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: var(--success-text); margin-bottom: var(--space-1);">
+                        All mods appear to be macOS compatible!
+                    </p>
+                    <p style="font-size: var(--text-xs); color: var(--text-secondary);">
+                        No Windows-only dependencies were detected. This collection should work on macOS.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Mod List with Compatibility -->
+            <div style="margin-bottom: var(--space-4);">
+                <h3 style="font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--text-secondary); text-transform: uppercase; margin-bottom: var(--space-3); display: flex; align-items: center; gap: var(--space-2);">
+                    <i data-lucide="package" style="width: 1rem; height: 1rem;"></i>
+                    Included Mods ({{ total_mods }})
+                </h3>
+                <div style="max-height: 350px; overflow-y: auto; border: 1px solid var(--border-primary); border-radius: var(--radius-md);">
+                    {% for mod_entry in mods_with_compat %}
+                    <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border-bottom: 1px solid var(--border-primary); {% if mod_entry.compat_status == 'incompatible' %}background: rgba(239, 68, 68, 0.05);{% endif %}">
+                        <!-- Compatibility icon -->
+                        <div style="flex-shrink: 0;">
+                            {% if mod_entry.compat_status == 'compatible' or mod_entry.compat_status == 'likely_compatible' %}
+                            <i data-lucide="check-circle" style="width: 1.25rem; height: 1.25rem; color: var(--success-text);" title="Compatible with macOS"></i>
+                            {% elif mod_entry.compat_status == 'incompatible' %}
+                            <i data-lucide="x-circle" style="width: 1.25rem; height: 1.25rem; color: var(--error-text);" title="{{ mod_entry.compat_reason }}"></i>
+                            {% else %}
+                            <i data-lucide="help-circle" style="width: 1.25rem; height: 1.25rem; color: var(--text-tertiary);" title="Compatibility unknown"></i>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Mod thumbnail -->
+                        {% if mod_entry.mod and mod_entry.mod.pictureUrl %}
+                        <div style="width: 48px; height: 48px; border-radius: var(--radius-sm); overflow: hidden; flex-shrink: 0; background: var(--bg-tertiary);">
+                            <img src="{{ mod_entry.mod.pictureUrl }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        {% else %}
+                        <div style="width: 48px; height: 48px; border-radius: var(--radius-sm); flex-shrink: 0; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="package" style="width: 1.25rem; height: 1.25rem; color: var(--text-tertiary);"></i>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Mod info -->
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: 2px;">
+                                <span style="font-size: var(--text-sm); font-weight: var(--font-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    {{ mod_entry.mod.name if mod_entry.mod else 'Unknown Mod' }}
+                                </span>
+                                {% if mod_entry.isRequired %}
+                                <span class="badge" style="background: var(--info-bg); color: var(--info-text); font-size: 10px; padding: 2px 6px;">Required</span>
+                                {% endif %}
+                            </div>
+                            
+                            {% if mod_entry.mod and mod_entry.mod.author %}
+                            <span style="font-size: var(--text-xs); color: var(--text-tertiary);">
+                                by {{ mod_entry.mod.author }}
+                            </span>
+                            {% endif %}
+                            
+                            {% if mod_entry.compat_status == 'incompatible' and mod_entry.compat_reason %}
+                            <div style="font-size: var(--text-xs); color: var(--error-text); margin-top: 2px;">
+                                <i data-lucide="alert-circle" style="width: 0.75rem; height: 0.75rem; display: inline-block; vertical-align: middle;"></i>
+                                {{ mod_entry.compat_reason }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- View on Nexus link -->
+                        {% if mod_entry.mod and mod_entry.mod.nexusModId %}
+                        <a href="https://www.nexusmods.com/{{ game_domain }}/mods/{{ mod_entry.mod.nexusModId }}" 
+                           target="_blank" 
+                           class="btn btn-ghost btn-sm"
+                           style="flex-shrink: 0;"
+                           title="View on Nexus Mods">
+                            <i data-lucide="external-link" style="width: 0.875rem; height: 0.875rem;"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">
+                Cancel
+            </button>
+            <a href="https://next.nexusmods.com/{{ game_domain }}/collections/{{ collection.slug }}" 
+               target="_blank"
+               class="btn btn-secondary">
+                <i data-lucide="external-link" style="width: 1rem; height: 1rem;"></i>
+                View on Nexus
+            </a>
+            <button class="btn btn-primary"
+                    hx-post="/api/collections/import"
+                    hx-vals='{"url": "{{ original_url }}"}'
+                    hx-swap="none"
+                    onclick="this.disabled=true; this.innerHTML='Importing...';">
+                <i data-lucide="download" style="width: 1rem; height: 1rem;"></i>
+                Import Collection
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: var(--space-4);
+        animation: fadeIn 0.2s ease;
+    }
+    
+    .modal {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        width: 100%;
+        animation: slideUp 0.2s ease;
+    }
+    
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--space-4);
+        border-bottom: 1px solid var(--border-primary);
+    }
+    
+    .modal-body {
+        padding: var(--space-4);
+    }
+    
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--space-2);
+        padding: var(--space-4);
+        border-top: 1px solid var(--border-primary);
+    }
+    
+    .badge-success {
+        background: var(--success-bg);
+        color: var(--success-text);
+    }
+    
+    .badge-warning {
+        background: var(--warning-bg);
+        color: var(--warning-text);
+    }
+    
+    .badge-error {
+        background: var(--error-bg);
+        color: var(--error-text);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+
+<script>
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+</script>

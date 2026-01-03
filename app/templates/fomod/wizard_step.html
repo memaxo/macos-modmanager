@@ -1,0 +1,232 @@
+<!-- FOMOD Wizard Step Content -->
+<form hx-post="/api/fomod/wizard/{{ session_id }}/step/{{ step_data.step_index }}"
+      hx-target="#fomod-step-content"
+      hx-swap="innerHTML"
+      style="height: 100%; display: flex; flex-direction: column;">
+    
+    <!-- Step Title -->
+    <div style="margin-bottom: var(--space-5);">
+        <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-1);">
+            {{ step_data.step_name }}
+        </h3>
+        <p style="color: var(--text-secondary); font-size: var(--text-sm);">
+            Select your preferred options below
+        </p>
+    </div>
+    
+    <!-- Option Groups -->
+    <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: var(--space-6);">
+        {% for group in step_data.groups %}
+        <div class="option-group" style="background: var(--bg-primary); border-radius: var(--radius-lg); border: 1px solid var(--border-primary); overflow: hidden;">
+            <!-- Group Header -->
+            <div style="padding: var(--space-3) var(--space-4); background: var(--bg-tertiary); border-bottom: 1px solid var(--border-primary);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--text-primary);">
+                        {{ group.name }}
+                    </h4>
+                    <span style="font-size: var(--text-xs); color: var(--text-tertiary); background: var(--bg-secondary); padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm);">
+                        {% if group.type == 'SelectExactlyOne' %}
+                            Select one
+                        {% elif group.type == 'SelectAtMostOne' %}
+                            Optional - select one
+                        {% elif group.type == 'SelectAtLeastOne' %}
+                            Select one or more
+                        {% elif group.type == 'SelectAll' %}
+                            All required
+                        {% else %}
+                            Select any
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Options List -->
+            <div style="padding: var(--space-3);">
+                {% if group.is_radio %}
+                    <!-- Radio buttons for SelectExactlyOne / SelectAtMostOne -->
+                    {% if group.allow_none %}
+                    <label class="option-item" style="display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3); border-radius: var(--radius-md); cursor: pointer; transition: background var(--transition-fast); margin-bottom: var(--space-2);"
+                           onmouseover="this.style.background='var(--bg-hover)'"
+                           onmouseout="this.style.background='transparent'">
+                        <input type="radio" 
+                               name="group_{{ group.name }}" 
+                               value="-1"
+                               {% if group.name not in existing_choices or existing_choices[group.name]|length == 0 %}checked{% endif %}
+                               style="accent-color: var(--accent-primary); margin-top: 2px; width: 1rem; height: 1rem;">
+                        <div style="flex: 1;">
+                            <span style="font-weight: var(--font-medium); color: var(--text-secondary);">None</span>
+                            <p style="font-size: var(--text-sm); color: var(--text-tertiary); margin-top: var(--space-1);">
+                                Skip this option
+                            </p>
+                        </div>
+                    </label>
+                    {% endif %}
+                    
+                    {% for plugin in group.plugins %}
+                    <label class="option-item" style="display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3); border-radius: var(--radius-md); cursor: pointer; transition: background var(--transition-fast); {% if not loop.last %}margin-bottom: var(--space-2);{% endif %}"
+                           onmouseover="this.style.background='var(--bg-hover)'"
+                           onmouseout="this.style.background='transparent'">
+                        <input type="radio" 
+                               name="group_{{ group.name }}" 
+                               value="{{ loop.index0 }}"
+                               {% if group.name in existing_choices and loop.index0 in existing_choices[group.name] %}checked{% endif %}
+                               {% if plugin.type == 'Required' %}checked disabled{% endif %}
+                               {% if not group.allow_none and loop.first and (group.name not in existing_choices or existing_choices[group.name]|length == 0) %}checked{% endif %}
+                               style="accent-color: var(--accent-primary); margin-top: 2px; width: 1rem; height: 1rem;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                <span style="font-weight: var(--font-medium); color: var(--text-primary);">{{ plugin.name }}</span>
+                                {% if plugin.type == 'Recommended' %}
+                                <span style="font-size: var(--text-xs); color: var(--accent-success); background: var(--success-bg); padding: 2px var(--space-2); border-radius: var(--radius-sm);">
+                                    Recommended
+                                </span>
+                                {% elif plugin.type == 'Required' %}
+                                <span style="font-size: var(--text-xs); color: var(--accent-warning); background: var(--warning-bg); padding: 2px var(--space-2); border-radius: var(--radius-sm);">
+                                    Required
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% if plugin.description %}
+                            <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-1); line-height: var(--leading-relaxed);">
+                                {{ plugin.description }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        {% if plugin.image and fomod_path %}
+                        <div style="flex-shrink: 0;">
+                            <img src="/api/fomod/session/{{ session_id }}/image/{{ plugin.image }}" 
+                                 alt="{{ plugin.name }}"
+                                 style="width: 80px; height: 60px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--border-primary);"
+                                 onerror="this.style.display='none'">
+                        </div>
+                        {% endif %}
+                    </label>
+                    {% endfor %}
+                    
+                {% elif group.select_all %}
+                    <!-- Display only for SelectAll -->
+                    {% for plugin in group.plugins %}
+                    <div class="option-item" style="display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3); border-radius: var(--radius-md); {% if not loop.last %}margin-bottom: var(--space-2);{% endif %} background: var(--success-bg); border: 1px solid var(--success-border);">
+                        <input type="checkbox" 
+                               name="group_{{ group.name }}_{{ loop.index0 }}" 
+                               value="1"
+                               checked
+                               disabled
+                               style="accent-color: var(--accent-success); margin-top: 2px; width: 1rem; height: 1rem;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                <span style="font-weight: var(--font-medium); color: var(--text-primary);">{{ plugin.name }}</span>
+                                <span style="font-size: var(--text-xs); color: var(--accent-success); background: rgba(173, 219, 103, 0.3); padding: 2px var(--space-2); border-radius: var(--radius-sm);">
+                                    Auto-selected
+                                </span>
+                            </div>
+                            {% if plugin.description %}
+                            <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-1); line-height: var(--leading-relaxed);">
+                                {{ plugin.description }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Hidden input to submit the selection -->
+                    <input type="hidden" name="group_{{ group.name }}_{{ loop.index0 }}" value="1">
+                    {% endfor %}
+                    
+                {% else %}
+                    <!-- Checkboxes for SelectAtLeastOne / SelectAny -->
+                    {% for plugin in group.plugins %}
+                    <label class="option-item" style="display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3); border-radius: var(--radius-md); cursor: pointer; transition: background var(--transition-fast); {% if not loop.last %}margin-bottom: var(--space-2);{% endif %}"
+                           onmouseover="this.style.background='var(--bg-hover)'"
+                           onmouseout="this.style.background='transparent'">
+                        <input type="checkbox" 
+                               name="group_{{ group.name }}_{{ loop.index0 }}" 
+                               value="1"
+                               {% if group.name in existing_choices and loop.index0 in existing_choices[group.name] %}checked{% endif %}
+                               {% if plugin.type == 'Required' %}checked disabled{% endif %}
+                               style="accent-color: var(--accent-primary); margin-top: 2px; width: 1rem; height: 1rem;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                <span style="font-weight: var(--font-medium); color: var(--text-primary);">{{ plugin.name }}</span>
+                                {% if plugin.type == 'Recommended' %}
+                                <span style="font-size: var(--text-xs); color: var(--accent-success); background: var(--success-bg); padding: 2px var(--space-2); border-radius: var(--radius-sm);">
+                                    Recommended
+                                </span>
+                                {% elif plugin.type == 'Required' %}
+                                <span style="font-size: var(--text-xs); color: var(--accent-warning); background: var(--warning-bg); padding: 2px var(--space-2); border-radius: var(--radius-sm);">
+                                    Required
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% if plugin.description %}
+                            <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-1); line-height: var(--leading-relaxed);">
+                                {{ plugin.description }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        {% if plugin.image and fomod_path %}
+                        <div style="flex-shrink: 0;">
+                            <img src="/api/fomod/session/{{ session_id }}/image/{{ plugin.image }}" 
+                                 alt="{{ plugin.name }}"
+                                 style="width: 80px; height: 60px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--border-primary);"
+                                 onerror="this.style.display='none'">
+                        </div>
+                        {% endif %}
+                    </label>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Navigation Buttons -->
+    <div style="padding-top: var(--space-5); border-top: 1px solid var(--border-primary); margin-top: var(--space-5); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            {% if not step_data.is_first %}
+            <button type="submit" 
+                    name="direction" 
+                    value="back"
+                    class="btn btn-secondary"
+                    style="gap: var(--space-2);">
+                <i data-lucide="chevron-left" style="width: 1rem; height: 1rem;"></i>
+                Previous
+            </button>
+            {% else %}
+            <button type="button"
+                    onclick="htmx.ajax('POST', '/api/fomod/wizard/{{ session_id }}/cancel', {target: '#fomod-wizard-container', swap: 'innerHTML'})"
+                    class="btn btn-secondary"
+                    style="gap: var(--space-2); color: var(--accent-error);">
+                <i data-lucide="x" style="width: 1rem; height: 1rem;"></i>
+                Cancel
+            </button>
+            {% endif %}
+        </div>
+        
+        <div style="display: flex; gap: var(--space-3);">
+            {% if step_data.is_last %}
+            <button type="submit" 
+                    name="direction" 
+                    value="complete"
+                    class="btn btn-primary"
+                    style="gap: var(--space-2);">
+                <i data-lucide="check" style="width: 1rem; height: 1rem;"></i>
+                Review & Install
+            </button>
+            {% else %}
+            <button type="submit" 
+                    name="direction" 
+                    value="next"
+                    class="btn btn-primary"
+                    style="gap: var(--space-2);">
+                Next
+                <i data-lucide="chevron-right" style="width: 1rem; height: 1rem;"></i>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</form>
+
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

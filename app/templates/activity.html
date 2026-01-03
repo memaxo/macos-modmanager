@@ -2,17 +2,288 @@
 
 {% block content %}
 <div style="margin-bottom: var(--space-6);">
-    <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
-        Activity Log
-    </h1>
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4);">
+        <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin: 0;">
+            Command Center
+        </h1>
+        <div id="game-status-badge" 
+             hx-get="/api/launcher/status"
+             hx-trigger="load, every 3s"
+             hx-swap="innerHTML"
+             style="display: inline-block;">
+            <span class="badge" style="padding: var(--space-1) var(--space-3);">Loading...</span>
+        </div>
+    </div>
     
-    <div id="activity-list" 
-         hx-get="/api/dashboard/activity"
-         hx-trigger="load"
-         hx-swap="innerHTML">
-        <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
-            Loading activity...
+    <!-- Command Center Grid -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); margin-bottom: var(--space-6);">
+        <!-- Game Status Panel -->
+        <div class="card" style="padding: var(--space-4);">
+            <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-3); display: flex; align-items: center; gap: var(--space-2);">
+                <i data-lucide="play-circle" style="width: 1rem; height: 1rem; color: var(--accent-primary);"></i>
+                Game Status
+            </h3>
+            <div id="game-status-content"
+                 hx-get="/api/launcher/status"
+                 hx-trigger="load, every 3s"
+                 hx-swap="innerHTML"
+                 style="display: flex; flex-direction: column; gap: var(--space-2);">
+                <div style="text-align: center; padding: var(--space-4); color: var(--text-secondary);">
+                    <i data-lucide="loader-2" class="animate-spin" style="width: 1rem; height: 1rem;"></i>
+                    Loading...
+                </div>
+            </div>
+        </div>
+        
+        <!-- Metrics Panel -->
+        {% include "components/metrics_panel.html" %}
+        
+        <!-- Enabled Mods Panel -->
+        {% include "components/enabled_mods_panel.html" %}
+    </div>
+    
+    <!-- Game Controls -->
+    <div style="margin-bottom: var(--space-6);">
+        {% include "components/game_controls.html" %}
+    </div>
+    
+    <!-- Launch Logs Section -->
+    <div class="card" style="padding: var(--space-6); margin-bottom: var(--space-6);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4);">
+            <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: var(--space-2);">
+                <i data-lucide="terminal" style="width: 1.2rem; height: 1.2rem; color: var(--accent-primary);"></i>
+                Launch Logs
+            </h2>
+            <div style="display: flex; gap: var(--space-2);">
+                <select id="log-level-filter" class="btn btn-ghost" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);" onchange="filterLogs();">
+                    <option value="">All Levels</option>
+                    <option value="error">Errors</option>
+                    <option value="warning">Warnings</option>
+                    <option value="info">Info</option>
+                </select>
+                <select id="log-source-filter" class="btn btn-ghost" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);" onchange="filterLogs();">
+                    <option value="">All Sources</option>
+                    <option value="launcher">Launcher</option>
+                    <option value="red4ext">RED4ext</option>
+                    <option value="tweakxl">TweakXL</option>
+                    <option value="archivexl">ArchiveXL</option>
+                    <option value="redscript">Redscript</option>
+                    <option value="game">Game</option>
+                </select>
+                <input 
+                    type="text" 
+                    id="log-search" 
+                    placeholder="Search logs..." 
+                    class="btn btn-ghost" 
+                    style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2); min-width: 150px;"
+                    oninput="filterLogs();">
+                <button 
+                    class="btn btn-ghost" 
+                    style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);"
+                    onclick="clearLogs();">
+                    <i data-lucide="trash-2" style="width: 0.8rem; height: 0.8rem;"></i>
+                </button>
+                <button 
+                    class="btn btn-ghost" 
+                    style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);"
+                    onclick="exportLogs();">
+                    <i data-lucide="download" style="width: 0.8rem; height: 0.8rem;"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div id="launch-logs-viewer" 
+             style="background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: var(--radius-md); padding: var(--space-3); max-height: 400px; overflow-y: auto; font-family: monospace; font-size: var(--text-xs); line-height: 1.6;">
+            <div style="text-align: center; padding: var(--space-4); color: var(--text-secondary);">
+                <i data-lucide="loader-2" class="animate-spin" style="width: 1rem; height: 1rem;"></i>
+                Loading logs...
+            </div>
+        </div>
+    </div>
+    
+    <!-- Activity Feed Section -->
+    <div class="card" style="padding: var(--space-6);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4);">
+            <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: var(--space-2);">
+                <i data-lucide="list-todo" style="width: 1.2rem; height: 1.2rem; color: var(--accent-info);"></i>
+                Activity Feed
+            </h2>
+            <button 
+                class="btn-ghost"
+                style="display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm);"
+                hx-get="/api/dashboard/activity"
+                hx-target="#activity-feed"
+                hx-swap="innerHTML">
+                <i data-lucide="refresh-cw" style="width: 0.9rem; height: 0.9rem;"></i> Refresh
+            </button>
+        </div>
+        <div id="activity-feed" 
+             hx-get="/api/dashboard/activity" 
+             hx-trigger="load, every 30s"
+             hx-swap="innerHTML"
+             style="max-height: 400px; overflow-y: auto;">
+            <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+                Loading activity...
+            </div>
         </div>
     </div>
 </div>
+
+<script src="/static/js/activity.js"></script>
+<script>
+// Initialize status badge
+document.body.addEventListener('htmx:afterSwap', function(event) {
+    if (event.detail.target.id === 'game-status-badge') {
+        const data = JSON.parse(event.detail.xhr.response);
+        const isRunning = data.metrics?.is_running || data.is_running;
+        const status = isRunning ? 'Running' : 'Stopped';
+        const badgeClass = isRunning ? 'badge-success' : 'badge';
+        event.detail.target.innerHTML = `<span class="badge ${badgeClass}" style="padding: var(--space-1) var(--space-3);">${status}</span>`;
+    }
+    
+    if (event.detail.target.id === 'game-status-content') {
+        const data = JSON.parse(event.detail.xhr.response);
+        const metrics = data.metrics || {};
+        const isRunning = metrics.is_running || data.is_running;
+        
+        if (isRunning && metrics.pid) {
+            event.detail.target.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: var(--text-xs); color: var(--text-secondary);">Status</span>
+                        <span class="badge badge-success" style="font-size: var(--text-xs);">Running</span>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: var(--text-xs); color: var(--text-secondary);">PID</span>
+                        <span style="font-size: var(--text-xs); color: var(--text-primary); font-family: monospace;">${metrics.pid}</span>
+                    </div>
+                    ${metrics.uptime_seconds ? `
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: var(--text-xs); color: var(--text-secondary);">Uptime</span>
+                        <span style="font-size: var(--text-xs); color: var(--text-primary);">${formatUptime(metrics.uptime_seconds)}</span>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        } else {
+            event.detail.target.innerHTML = `
+                <div style="text-align: center; padding: var(--space-4); color: var(--text-secondary);">
+                    <i data-lucide="stop-circle" style="width: 2rem; height: 2rem; opacity: 0.5;"></i>
+                    <div style="margin-top: var(--space-2); font-size: var(--text-sm);">Game not running</div>
+                </div>
+            `;
+        }
+        
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+});
+
+function formatUptime(seconds) {
+    if (!seconds || seconds === 0) return "0s";
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    const parts = [];
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    if (secs > 0 || parts.length === 0) parts.push(`${secs}s`);
+    return parts.join(" ");
+}
+
+function filterLogs() {
+    const level = document.getElementById('log-level-filter').value;
+    const source = document.getElementById('log-source-filter').value;
+    const search = document.getElementById('log-search').value;
+    
+    const params = new URLSearchParams();
+    params.append('limit', '500');
+    if (level) params.append('level', level);
+    if (source) params.append('source', source);
+    if (search) params.append('search', search);
+    
+    htmx.ajax('GET', '/api/launcher/logs?' + params.toString(), {
+        target: '#launch-logs-viewer',
+        swap: 'innerHTML'
+    });
+}
+
+// Render logs from API response
+document.body.addEventListener('htmx:afterSwap', function(event) {
+    if (event.detail.target.id === 'launch-logs-viewer') {
+        try {
+            const data = JSON.parse(event.detail.xhr.response);
+            if (data.logs && Array.isArray(data.logs)) {
+                if (window.activityJS && window.activityJS.renderLogs) {
+                    window.activityJS.renderLogs(data.logs);
+                } else {
+                    // Fallback rendering
+                    renderLogsFallback(data.logs);
+                }
+            }
+        } catch (e) {
+            console.error('Error rendering logs:', e);
+        }
+    }
+});
+
+function renderLogsFallback(logs) {
+    const viewer = document.getElementById('launch-logs-viewer');
+    if (!viewer) return;
+    
+    if (logs.length === 0) {
+        viewer.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: var(--space-4);">No logs available</div>';
+        return;
+    }
+    
+    viewer.innerHTML = logs.map(log => {
+        const timestamp = new Date(log.timestamp).toLocaleTimeString();
+        const levelColor = {
+            'error': 'var(--accent-error)',
+            'warning': 'var(--accent-warning)',
+            'info': 'var(--accent-info)',
+            'debug': 'var(--text-tertiary)'
+        }[log.level] || 'var(--text-secondary)';
+        
+        return `
+            <div style="padding: var(--space-1) 0; border-bottom: 1px solid var(--border-primary); display: flex; gap: var(--space-2); align-items: start;">
+                <span style="color: var(--text-tertiary); min-width: 80px; font-size: 10px;">${timestamp}</span>
+                <span style="min-width: 60px; font-size: 10px; text-transform: uppercase; color: ${levelColor};">[${log.level}]</span>
+                <span style="min-width: 80px; font-size: 10px; color: var(--text-secondary);">[${log.source}]</span>
+                <span style="flex: 1; color: var(--text-primary); word-break: break-word;">${escapeHtml(log.message)}</span>
+            </div>
+        `;
+    }).join('');
+    
+    viewer.scrollTop = viewer.scrollHeight;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function clearLogs() {
+    if (confirm('Clear all logs?')) {
+        fetch('/api/logs/clear', {method: 'DELETE'})
+            .then(() => filterLogs());
+    }
+}
+
+function exportLogs() {
+    fetch('/api/logs/export')
+        .then(response => response.json())
+        .then(data => {
+            const blob = new Blob([data.content], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = data.filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+}
+</script>
 {% endblock %}

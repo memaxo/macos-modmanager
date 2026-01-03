@@ -1,0 +1,15 @@
+<div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-1) var(--space-3); background: var(--bg-tertiary); border-radius: var(--radius-full); border: 1px solid var(--border-primary);">
+    <div style="width: 24px; height: 24px; border-radius: var(--radius-full); overflow: hidden; background: var(--bg-secondary);">
+        {% if user.profile_url %}
+        <img src="{{ user.profile_url }}" alt="{{ user.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+        {% else %}
+        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-secondary);">
+            {{ user.name[0] | upper }}
+        </div>
+        {% endif %}
+    </div>
+    <div style="display: flex; flex-direction: column; line-height: 1;">
+        <span style="font-size: var(--text-xs); font-weight: var(--font-bold); color: var(--text-primary);">{{ user.name }}</span>
+        <span style="font-size: 10px; color: var(--accent-primary);">{{ "Premium" if user.is_premium else "Supporter" if user.is_supporter else "Free" }}</span>
+    </div>
+</div>

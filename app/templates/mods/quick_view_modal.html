@@ -1,0 +1,184 @@
+<div id="modal-container" class="modal-overlay" onclick="if(event.target == this) this.remove()">
+    <div class="modal-content" style="max-width: 900px; width: 90%; max-height: 90vh; overflow-y: auto;">
+        <div style="position: sticky; top: 0; background: var(--bg-secondary); padding: var(--space-4); border-bottom: 1px solid var(--border-primary); display: flex; justify-content: space-between; align-items: center; z-index: 10;">
+            <h2 style="font-size: var(--text-xl); font-weight: var(--font-bold); margin: 0;">{{ mod.name }}</h2>
+            <button class="btn-close" onclick="document.getElementById('modal-container').remove()">&times;</button>
+        </div>
+
+        <div style="padding: var(--space-6);">
+            <!-- Screenshot Gallery -->
+            <div class="gallery-container" style="margin-bottom: var(--space-6);">
+                <div id="main-screenshot" style="aspect-ratio: 16/9; background: var(--bg-tertiary); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: var(--space-3);">
+                    <img src="{{ mod.picture_url }}" id="current-img" style="width: 100%; height: 100%; object-fit: contain;">
+                </div>
+                <div style="display: flex; gap: var(--space-2); overflow-x: auto; padding-bottom: var(--space-2);">
+                    {% for img in images %}
+                    <img src="{{ img.URI }}" 
+                         onclick="document.getElementById('current-img').src = this.src"
+                         style="height: 60px; aspect-ratio: 16/9; object-fit: cover; border-radius: var(--radius-sm); cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s;"
+                         onmouseover="this.style.borderColor = 'var(--accent-primary)'"
+                         onmouseout="if(document.getElementById('current-img').src != this.src) this.style.borderColor = 'transparent'">
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="modal-body-grid">
+                <div style="flex-grow: 1; min-width: 0;">
+                    <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); margin-bottom: var(--space-3);">Description</h3>
+                    <div class="mod-description" style="color: var(--text-secondary); line-height: 1.6; margin-bottom: var(--space-8);">
+                        {{ mod.description | safe }}
+                    </div>
+
+                    <!-- Related Mods Rail -->
+                    <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); margin-bottom: var(--space-3); margin-top: var(--space-8);">Users Also Installed</h3>
+                    <div id="related-mods" hx-get="/api/mods/{{ mod.mod_id }}/related" hx-trigger="load" hx-swap="innerHTML">
+                        <div style="display: flex; gap: var(--space-4); overflow-x: auto; padding-bottom: var(--space-4);">
+                            <div style="padding: var(--space-4); text-align: center; color: var(--text-secondary); font-size: var(--text-sm);">
+                                Loading recommendations...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Inspector Section -->
+                    <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); margin-bottom: var(--space-3); margin-top: var(--space-8);">File Inspector</h3>
+                    <div id="file-inspector-container">
+                        <div class="card" style="padding: var(--space-6); text-align: center; background: var(--bg-primary); border-style: dashed;">
+                            <i data-lucide="search" style="width: 2.5rem; height: 2.5rem; color: var(--text-tertiary); margin-bottom: var(--space-3);"></i>
+                            <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">Preview the mod's file structure before downloading.</p>
+                            <button 
+                                class="btn btn-secondary"
+                                hx-get="/api/mods/discovery/{{ mod.mod_id }}/files/{{ main_file_id }}/inspect"
+                                hx-target="#file-inspector-container"
+                                hx-swap="innerHTML">
+                                Inspect Main File
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+                    <div class="card" style="padding: var(--space-4); background: var(--bg-primary);">
+                        <h4 style="font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--text-secondary); text-transform: uppercase; margin-bottom: var(--space-3);">Mod Info</h4>
+                        <div style="display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--text-sm);">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Version</span>
+                                <span style="color: var(--text-primary);">{{ mod.version }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Author</span>
+                                <span style="color: var(--accent-primary); cursor: pointer; text-decoration: underline;" 
+                                      onclick="document.getElementById('nexus-search').value = '{{ mod.author }}'; 
+                                               document.getElementById('nexus-search').dispatchEvent(new Event('keyup'));
+                                               document.getElementById('modal-container').remove();">
+                                    {{ mod.author }}
+                                </span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Downloads</span>
+                                <span style="color: var(--text-primary);">{{ mod.mod_downloads }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Unique</span>
+                                <span style="color: var(--text-primary);">{{ mod.mod_unique_downloads }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                        <button 
+                            class="btn btn-primary btn-block" 
+                            hx-post="/api/mods/nexus/{{ mod.mod_id }}"
+                            hx-swap="none"
+                            onclick="this.disabled=true; this.innerText='Installing...'">
+                            Install Mod Only
+                        </button>
+                        
+                        <button 
+                            class="btn btn-warning btn-block" 
+                            style="background: var(--warning-bg); color: var(--warning-text); border: none;"
+                            hx-post="/api/mods/nexus/{{ mod.mod_id }}/smart-install"
+                            hx-swap="none"
+                            onclick="this.disabled=true; this.innerText='Starting Smart Install...'">
+                            Smart Install (with Deps)
+                        </button>
+                    </div>
+                    
+                    <a href="https://www.nexusmods.com/cyberpunk2077/mods/{{ mod.mod_id }}" target="_blank" class="btn btn-secondary btn-block" style="text-align: center;">
+                        View on Nexus
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .modal-content {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-2xl);
+        animation: slideUp 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .btn-close {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 2rem;
+        cursor: pointer;
+        padding: 0 var(--space-2);
+        line-height: 1;
+    }
+
+    .btn-close:hover {
+        color: var(--text-primary);
+    }
+
+    .modal-body-grid {
+        display: grid;
+        grid-template-columns: 1fr 250px;
+        gap: var(--space-8);
+    }
+
+    @media (max-width: 768px) {
+        .modal-body-grid {
+            grid-template-columns: 1fr;
+            gap: var(--space-6);
+        }
+        
+        .modal-body-grid > div:last-child {
+            order: -1; /* Show mod info/actions at top on mobile */
+        }
+    }
+
+    .mod-description img {
+        max-width: 100%;
+        height: auto;
+    }
+</style>

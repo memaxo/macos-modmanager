@@ -1,0 +1,31 @@
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: var(--space-6);">
+    {% for mod in mods %}
+    <div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+        {% if mod.pictureUrl %}
+        <div style="aspect-ratio: 16/9; overflow: hidden; background: var(--bg-tertiary);">
+            <img src="{{ mod.pictureUrl }}" alt="{{ mod.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        {% else %}
+        <div style="aspect-ratio: 16/9; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; color: var(--text-tertiary);">
+            No Preview
+        </div>
+        {% endif %}
+        
+        <div style="padding: var(--space-4); flex-grow: 1;">
+            <h4 style="font-size: var(--text-md); font-weight: var(--font-semibold); margin-bottom: var(--space-1); line-height: 1.3;">
+                {{ mod.name }}
+            </h4>
+            <p style="font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.4; margin-bottom: var(--space-4);">
+                {{ mod.summary | truncate(80) }}
+            </p>
+            <a href="https://www.nexusmods.com/cyberpunk2077/mods/{{ mod.nexusModId }}" target="_blank" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center;">
+                View on Nexus
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <div style="grid-column: 1 / -1; text-align: center; padding: var(--space-12); color: var(--text-secondary);">
+        No related mods found.
+    </div>
+    {% endfor %}
+</div>

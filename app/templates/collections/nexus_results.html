@@ -1,0 +1,131 @@
+{% if total is defined %}
+<div style="margin-bottom: var(--space-4); padding: var(--space-3); background: var(--bg-tertiary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between;">
+    <span style="font-size: var(--text-sm); color: var(--text-secondary);">
+        Found <strong style="color: var(--text-primary);">{{ total }}</strong> collections
+    </span>
+</div>
+{% endif %}
+
+<div class="collections-grid">
+    {% for collection in collections %}
+    <div class="collection-card"
+         {% if loop.last and next_page %}
+         hx-get="/api/collections/browse/search?page={{ next_page }}"
+         hx-trigger="revealed"
+         hx-swap="afterend"
+         hx-include="#collection-sort, #collection-game, #collection-adult-toggle"
+         {% endif %}>
+        <div class="collection-card-image">
+            {% if collection.tile_image or collection.tile_thumbnail %}
+            <img src="{{ collection.tile_image or collection.tile_thumbnail }}" 
+                 alt="{{ collection.name }}" 
+                 loading="lazy">
+            {% else %}
+            <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-tertiary);">
+                <i data-lucide="layers" style="width: 3rem; height: 3rem; margin-bottom: var(--space-2);"></i>
+                <span style="font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em;">Collection</span>
+            </div>
+            {% endif %}
+            
+            <div class="mod-count-badge">
+                <i data-lucide="package" style="width: 0.75rem; height: 0.75rem;"></i>
+                {{ collection.mod_count or 0 }} mods
+            </div>
+            
+            {% if collection.adult_content %}
+            <div style="position: absolute; top: var(--space-2); right: var(--space-2); background: var(--danger-bg); color: var(--danger-text); padding: 2px 6px; border-radius: var(--radius-xs); font-size: 10px; font-weight: var(--font-semibold);">
+                NSFW
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="collection-card-body">
+            <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); margin-bottom: var(--space-1); line-height: 1.3;">
+                {{ collection.name }}
+            </h3>
+            
+            {% if collection.author %}
+            <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-2); display: flex; align-items: center; gap: var(--space-1);">
+                <i data-lucide="user" style="width: 0.875rem; height: 0.875rem;"></i>
+                {{ collection.author }}
+            </p>
+            {% endif %}
+            
+            {% if collection.summary %}
+            <p style="font-size: var(--text-sm); color: var(--text-tertiary); margin-bottom: var(--space-3); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                {{ collection.summary }}
+            </p>
+            {% endif %}
+            
+            {% if collection.category %}
+            <div style="margin-bottom: var(--space-3);">
+                <span class="badge" style="background: var(--bg-tertiary); color: var(--text-secondary); font-size: var(--text-xs); padding: 4px 8px;">
+                    {{ collection.category }}
+                </span>
+            </div>
+            {% endif %}
+            
+            <div class="collection-stats">
+                <div class="collection-stat" title="Total Downloads">
+                    <i data-lucide="download" style="width: 0.875rem; height: 0.875rem;"></i>
+                    {% if collection.total_downloads >= 1000000 %}
+                        {{ "%.1f"|format(collection.total_downloads / 1000000) }}M
+                    {% elif collection.total_downloads >= 1000 %}
+                        {{ "%.1f"|format(collection.total_downloads / 1000) }}K
+                    {% else %}
+                        {{ collection.total_downloads or 0 }}
+                    {% endif %}
+                </div>
+                <div class="collection-stat" title="Endorsements">
+                    <i data-lucide="thumbs-up" style="width: 0.875rem; height: 0.875rem;"></i>
+                    {% if collection.endorsements >= 1000 %}
+                        {{ "%.1f"|format(collection.endorsements / 1000) }}K
+                    {% else %}
+                        {{ collection.endorsements or 0 }}
+                    {% endif %}
+                </div>
+                {% if collection.revision %}
+                <div class="collection-stat" title="Revision">
+                    <i data-lucide="git-branch" style="width: 0.875rem; height: 0.875rem;"></i>
+                    v{{ collection.revision }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div style="margin-top: var(--space-3); display: flex; gap: var(--space-2);">
+                <a href="https://next.nexusmods.com/{{ game_domain }}/collections/{{ collection.slug }}" 
+                   target="_blank"
+                   class="btn btn-secondary"
+                   style="flex: 1; font-size: var(--text-sm); padding: var(--space-2); justify-content: center;">
+                    <i data-lucide="external-link" style="width: 0.875rem; height: 0.875rem;"></i>
+                    View on Nexus
+                </a>
+                <button class="btn btn-primary"
+                        style="flex: 1; font-size: var(--text-sm); padding: var(--space-2);"
+                        hx-post="/api/collections/import"
+                        hx-vals='{"url": "https://next.nexusmods.com/{{ game_domain }}/collections/{{ collection.slug }}"}'
+                        hx-swap="none"
+                        onclick="this.disabled=true; this.innerHTML='<span class=spinner style=width:14px;height:14px></span> Importing...';">
+                    <i data-lucide="download" style="width: 0.875rem; height: 0.875rem;"></i>
+                    Import
+                </button>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    {% if not next_page %}
+    <div style="grid-column: 1 / -1; text-align: center; padding: var(--space-12); color: var(--text-secondary);">
+        <i data-lucide="inbox" style="width: 3rem; height: 3rem; margin: 0 auto var(--space-4); opacity: 0.5;"></i>
+        <p>No collections found.</p>
+        <p style="font-size: var(--text-sm); margin-top: var(--space-2);">Try adjusting your filters or check back later.</p>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<script>
+    // Reinitialize Lucide icons for dynamically loaded content
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+</script>

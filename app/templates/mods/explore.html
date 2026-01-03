@@ -1,0 +1,470 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: var(--space-8);">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--space-6);">
+        <div>
+            <h1 style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
+                Explore Nexus Mods
+            </h1>
+            <p style="color: var(--text-secondary);">Discover and install new mods directly from Nexus Mods</p>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: var(--space-4);">
+            <div id="nexus-profile" hx-get="/api/mods/nexus/profile" hx-trigger="load"></div>
+            
+            <!-- Density Toggles -->
+            <div class="btn-group">
+            <button class="btn btn-secondary active" onclick="setExploreDensity('comfortable')" id="density-comfortable" style="gap: var(--space-2);">
+                <i data-lucide="layout-grid" style="width: 1rem; height: 1rem;"></i>
+                Comfortable
+            </button>
+            <button class="btn btn-secondary" onclick="setExploreDensity('compact')" id="density-compact" style="gap: var(--space-2);">
+                <i data-lucide="list" style="width: 1rem; height: 1rem;"></i>
+                Compact
+            </button>
+        </div>
+        </div>
+    </div>
+
+    <!-- Inspect Mod by URL -->
+    <div class="card" style="margin-bottom: var(--space-4); padding: var(--space-4);">
+        <div style="display: flex; gap: var(--space-4); align-items: center;">
+            <div style="display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0;">
+                <i data-lucide="link" style="width: 1.25rem; height: 1.25rem; color: var(--accent-primary);"></i>
+                <span style="font-size: var(--text-sm); font-weight: var(--font-semibold);">Inspect Mod by URL</span>
+            </div>
+            <form id="mod-preview-form" style="display: flex; gap: var(--space-3); flex: 1;"
+                  hx-get="/api/mods/preview-by-url"
+                  hx-target="#mod-preview-modal-container"
+                  hx-swap="innerHTML">
+                <input type="text" 
+                       name="url"
+                       id="mod-url-input"
+                       class="input" 
+                       placeholder="https://www.nexusmods.com/cyberpunk2077/mods/12345"
+                       style="flex: 1;"
+                       required>
+                <button type="submit" 
+                        class="btn btn-primary" 
+                        style="white-space: nowrap;">
+                    <i data-lucide="eye" style="width: 1rem; height: 1rem;"></i>
+                    Check Compatibility
+                </button>
+            </form>
+        </div>
+        <p style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-2); margin-left: calc(1.25rem + var(--space-2) + 120px);">
+            Paste any Nexus mod URL to preview its contents and check macOS compatibility before installing
+        </p>
+    </div>
+
+    <!-- Search and Filters Bar -->
+    <div class="card" style="margin-bottom: var(--space-6); padding: var(--space-4);">
+        <!-- Main Filter Row -->
+        <div class="filter-bar" style="display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap;">
+            <div class="search-input-container" style="flex-grow: 1; min-width: 250px; position: relative;">
+                <input 
+                    type="text" 
+                    name="query" 
+                    id="nexus-search"
+                    placeholder="Search Nexus Mods..." 
+                    style="width: 100%; padding: var(--space-2) var(--space-4); background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: var(--radius-md); color: var(--text-primary);"
+                    hx-get="/api/mods/discovery/search"
+                    hx-trigger="keyup changed delay:500ms"
+                    hx-target="#browser-results"
+                    hx-include="#nexus-sort, #nexus-period, #adult-toggle, #macos-only-toggle, #redscript-only-toggle, #min-endorsements, #min-downloads, #page-size-select"
+                    hx-indicator="#search-indicator">
+            </div>
+            
+            <select 
+                name="sort" 
+                id="nexus-sort"
+                class="input"
+                style="width: auto; padding: var(--space-2) var(--space-4);"
+                hx-get="/api/mods/discovery/search"
+                hx-target="#browser-results"
+                hx-include="#nexus-search, #nexus-period, #adult-toggle, #macos-only-toggle, #redscript-only-toggle, #min-endorsements, #min-downloads, #page-size-select"
+                onchange="togglePeriod(this.value)">
+                <option value="trending">Trending</option>
+                <option value="downloads">Most Downloaded</option>
+                <option value="top">Most Endorsed</option>
+                <option value="latest">Recently Added</option>
+                <option value="endorsement_ratio">Hidden Gems (High Ratio)</option>
+            </select>
+
+            <select 
+                name="period" 
+                id="nexus-period"
+                class="input"
+                style="width: auto; padding: var(--space-2) var(--space-4);"
+                hx-get="/api/mods/discovery/search"
+                hx-target="#browser-results"
+                hx-include="#nexus-search, #nexus-sort, #adult-toggle, #macos-only-toggle, #redscript-only-toggle, #min-endorsements, #min-downloads, #page-size-select">
+                <option value="ALL_TIME">All Time</option>
+                <option value="LAST_7_DAYS">Last 7 Days</option>
+                <option value="LAST_30_DAYS">Last 30 Days</option>
+                <option value="LAST_YEAR">Last Year</option>
+            </select>
+
+            <div id="search-indicator" class="htmx-indicator">
+                <span class="spinner"></span>
+            </div>
+        </div>
+        
+        <!-- Quick Filters Row -->
+        <div style="display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap; margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border-primary);">
+            <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer; user-select: none;">
+                <input type="checkbox" id="macos-only-toggle" name="macos_only" checked
+                       hx-get="/api/mods/discovery/search" 
+                       hx-target="#browser-results"
+                       hx-include="#nexus-search, #nexus-sort, #nexus-period, #adult-toggle, #redscript-only-toggle, #min-endorsements, #min-downloads, #page-size-select"
+                       hx-indicator="#search-indicator"
+                       style="width: 1.1rem; height: 1.1rem; accent-color: var(--accent-primary);">
+                <span style="font-size: var(--text-sm); color: var(--text-secondary); display: flex; align-items: center; gap: var(--space-1);">
+                    <i data-lucide="apple" style="width: 1rem; height: 1rem;"></i>
+                    macOS Compatible
+                </span>
+            </label>
+            
+            <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer; user-select: none;">
+                <input type="checkbox" id="redscript-only-toggle" name="redscript_only" 
+                       hx-get="/api/mods/discovery/search" 
+                       hx-target="#browser-results"
+                       hx-include="#nexus-search, #nexus-sort, #nexus-period, #adult-toggle, #macos-only-toggle, #min-endorsements, #min-downloads, #page-size-select"
+                       hx-indicator="#search-indicator"
+                       style="width: 1.1rem; height: 1.1rem; accent-color: var(--accent-primary);">
+                <span style="font-size: var(--text-sm); color: var(--text-secondary); display: flex; align-items: center; gap: var(--space-1);">
+                    <i data-lucide="file-code" style="width: 1rem; height: 1rem;"></i>
+                    Redscript Only
+                </span>
+            </label>
+
+            <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer; user-select: none;">
+                <input type="checkbox" id="adult-toggle" name="include_adult" 
+                       hx-get="/api/mods/discovery/search" 
+                       hx-target="#browser-results"
+                       hx-include="#nexus-search, #nexus-sort, #nexus-period, #macos-only-toggle, #redscript-only-toggle, #min-endorsements, #min-downloads, #page-size-select"
+                       style="width: 1.1rem; height: 1.1rem; accent-color: var(--accent-primary);">
+                <span style="font-size: var(--text-sm); color: var(--text-secondary);">NSFW</span>
+            </label>
+            
+            <div style="margin-left: auto; display: flex; align-items: center; gap: var(--space-2);">
+                <button class="btn btn-ghost" onclick="toggleAdvancedFilters()" style="font-size: var(--text-sm); gap: var(--space-1);">
+                    <i data-lucide="sliders-horizontal" style="width: 1rem; height: 1rem;"></i>
+                    Advanced
+                    <i data-lucide="chevron-down" id="advanced-chevron" style="width: 0.875rem; height: 0.875rem; transition: transform 0.2s;"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Advanced Filters (Collapsible) -->
+        <div id="advanced-filters" style="display: none; margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border-primary);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4);">
+                <!-- Min Endorsements -->
+                <div>
+                    <label style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase; display: block; margin-bottom: var(--space-1);">
+                        Min Endorsements
+                    </label>
+                    <div style="display: flex; align-items: center; gap: var(--space-2);">
+                        <input type="range" id="min-endorsements" name="min_endorsements" 
+                               min="0" max="1000" value="0" step="50"
+                               oninput="document.getElementById('min-endorsements-val').textContent = this.value"
+                               hx-get="/api/mods/discovery/search"
+                               hx-target="#browser-results"
+                               hx-trigger="change"
+                               hx-include="#nexus-search, #nexus-sort, #nexus-period, #adult-toggle, #macos-only-toggle, #redscript-only-toggle, #min-downloads, #page-size-select"
+                               style="flex: 1; accent-color: var(--accent-primary);">
+                        <span id="min-endorsements-val" style="font-size: var(--text-sm); color: var(--text-secondary); min-width: 40px; text-align: right;">0</span>
+                    </div>
+                </div>
+                
+                <!-- Min Downloads -->
+                <div>
+                    <label style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase; display: block; margin-bottom: var(--space-1);">
+                        Min Downloads
+                    </label>
+                    <div style="display: flex; align-items: center; gap: var(--space-2);">
+                        <input type="range" id="min-downloads" name="min_downloads" 
+                               min="0" max="10000" value="0" step="500"
+                               oninput="document.getElementById('min-downloads-val').textContent = this.value >= 1000 ? (this.value/1000).toFixed(0) + 'K' : this.value"
+                               hx-get="/api/mods/discovery/search"
+                               hx-target="#browser-results"
+                               hx-trigger="change"
+                               hx-include="#nexus-search, #nexus-sort, #nexus-period, #adult-toggle, #macos-only-toggle, #redscript-only-toggle, #min-endorsements, #page-size-select"
+                               style="flex: 1; accent-color: var(--accent-primary);">
+                        <span id="min-downloads-val" style="font-size: var(--text-sm); color: var(--text-secondary); min-width: 40px; text-align: right;">0</span>
+                    </div>
+                </div>
+                
+                <!-- Results per Page -->
+                <div>
+                    <label style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase; display: block; margin-bottom: var(--space-1);">
+                        Results per Page
+                    </label>
+                    <select id="page-size-select" name="page_size" class="input" style="width: 100%;"
+                            hx-get="/api/mods/discovery/search"
+                            hx-target="#browser-results"
+                            hx-include="#nexus-search, #nexus-sort, #nexus-period, #adult-toggle, #macos-only-toggle, #redscript-only-toggle, #min-endorsements, #min-downloads">
+                        <option value="20">20 mods</option>
+                        <option value="50" selected>50 mods</option>
+                        <option value="100">100 mods</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search History -->
+        <div id="search-history" 
+             hx-get="/api/mods/discovery/history" 
+             hx-trigger="load, keyup from:#nexus-search" 
+             style="margin-top: var(--space-3); display: flex; align-items: center; gap: var(--space-3);">
+            <span style="font-size: 10px; color: var(--text-tertiary); text-transform: uppercase;">Recent:</span>
+            <!-- History loaded here -->
+        </div>
+    </div>
+
+    <div class="explore-layout">
+        <!-- Sidebar: Install Queue & Categories -->
+        <aside class="explore-sidebar" style="display: flex; flex-direction: column; gap: var(--space-6);">
+            <!-- Install Queue -->
+            <div class="card" style="padding: var(--space-4);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3);">
+                    <h3 style="font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--text-secondary); text-transform: uppercase; display: flex; align-items: center; gap: var(--space-2);">
+                        <i data-lucide="list-plus" style="width: 1rem; height: 1rem; color: var(--accent-primary);"></i>
+                        Install Queue
+                        <span id="queue-count" class="badge badge-info" style="font-size: 10px; padding: 2px 6px;">0</span>
+                    </h3>
+                </div>
+                <div id="install-queue-container" 
+                     hx-get="/api/mods/queue" 
+                     hx-trigger="load, queueUpdated from:body" 
+                     hx-swap="innerHTML">
+                    <div style="padding: var(--space-2); text-align: center; color: var(--text-tertiary); font-size: var(--text-xs);">
+                        <i data-lucide="inbox" style="width: 2rem; height: 2rem; margin-bottom: var(--space-2); opacity: 0.5;"></i>
+                        <p>Queue is empty</p>
+                        <p style="margin-top: var(--space-1);">Click + on mods to add</p>
+                    </div>
+                </div>
+                <button id="install-all-btn" 
+                        class="btn btn-primary" 
+                        style="width: 100%; margin-top: var(--space-3); display: none;"
+                        hx-post="/api/mods/queue/install-all"
+                        hx-swap="none">
+                    <i data-lucide="download" style="width: 1rem; height: 1rem;"></i>
+                    Install All
+                </button>
+            </div>
+
+            <!-- Categories -->
+            <div class="card" style="padding: var(--space-4); position: sticky; top: var(--space-4);">
+                <h3 style="font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--text-secondary); text-transform: uppercase; margin-bottom: var(--space-4);">
+                    Categories
+                </h3>
+                <div id="category-list" 
+                     hx-get="/api/mods/discovery/categories" 
+                     hx-trigger="load" 
+                     hx-swap="innerHTML">
+                    <div style="padding: var(--space-4); text-align: center; color: var(--text-secondary); font-size: var(--text-sm);">
+                        Loading categories...
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Results Container -->
+        <div id="browser-results" 
+             class="density-comfortable"
+             hx-get="/api/mods/discovery/search" 
+             hx-trigger="load" 
+             hx-swap="innerHTML">
+            <div style="text-align: center; padding: var(--space-12); color: var(--text-secondary);">
+                <p>Loading mods...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function togglePeriod(sortVal) {
+        // Period filter is now always visible since it applies to multiple sort modes
+    }
+
+    function toggleAdvancedFilters() {
+        const advFilters = document.getElementById('advanced-filters');
+        const chevron = document.getElementById('advanced-chevron');
+        
+        if (advFilters.style.display === 'none') {
+            advFilters.style.display = 'block';
+            chevron.style.transform = 'rotate(180deg)';
+        } else {
+            advFilters.style.display = 'none';
+            chevron.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    function setExploreDensity(density) {
+        const results = document.getElementById('browser-results');
+        const btnComfortable = document.getElementById('density-comfortable');
+        const btnCompact = document.getElementById('density-compact');
+        
+        if (density === 'comfortable') {
+            results.classList.remove('density-compact');
+            results.classList.add('density-comfortable');
+            btnComfortable.classList.add('active');
+            btnCompact.classList.remove('active');
+        } else {
+            results.classList.remove('density-comfortable');
+            results.classList.add('density-compact');
+            btnCompact.classList.add('active');
+            btnComfortable.classList.remove('active');
+        }
+        localStorage.setItem('explore-density', density);
+    }
+
+    // Initialize density from localStorage
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedDensity = localStorage.getItem('explore-density') || 'comfortable';
+        setExploreDensity(savedDensity);
+    });
+</script>
+
+<style>
+    /* Default Grid State */
+    .discovery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--space-6);
+    }
+
+    /* Responsive Grid Layout */
+    .explore-layout {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: var(--space-8);
+    }
+
+    @media (max-width: 1024px) {
+        .explore-layout {
+            grid-template-columns: 200px 1fr;
+            gap: var(--space-4);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .explore-layout {
+            grid-template-columns: 1fr;
+        }
+        
+        .filter-bar {
+            flex-direction: column;
+            align-items: stretch !important;
+        }
+        
+        .search-input-container {
+            min-width: 100% !important;
+        }
+        
+        #nexus-sort, #nexus-period {
+            width: 100% !important;
+        }
+        
+        .explore-sidebar {
+            order: 2;
+        }
+        
+        #browser-results {
+            order: 1;
+        }
+        
+        .explore-sidebar .card {
+            position: static !important;
+        }
+    }
+
+    /* Density Transitions */
+    #browser-results {
+        transition: all 0.3s ease;
+    }
+
+    #browser-results.density-compact .discovery-grid {
+        grid-template-columns: 1fr !important;
+        gap: var(--space-2) !important;
+    }
+    
+    #browser-results.density-comfortable .discovery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+        gap: var(--space-6) !important;
+    }
+
+    #browser-results.density-compact .card {
+        flex-direction: row !important;
+        height: auto !important;
+        padding: var(--space-2) !important;
+    }
+    
+    #browser-results.density-compact .card div[style*="aspect-ratio"] {
+        width: 120px !important;
+        height: 67px !important;
+        flex-shrink: 0 !important;
+        border-radius: var(--radius-sm) !important;
+    }
+    
+    #browser-results.density-compact .card h3 {
+        font-size: var(--text-sm) !important;
+        margin-bottom: 0 !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    #browser-results.density-compact .card p {
+        display: none !important;
+    }
+
+    .htmx-indicator {
+        display: none;
+    }
+    .htmx-request .htmx-indicator {
+        display: block;
+    }
+    .htmx-request.htmx-indicator {
+        display: block;
+    }
+    
+    .spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border-primary);
+        border-top: 2px solid var(--accent-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .badge-success {
+        background: var(--success-bg);
+        color: var(--success-text);
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+</style>
+
+<!-- Modal container for mod preview -->
+<div id="mod-preview-modal-container"></div>
+{% endblock %}

@@ -2,7 +2,10 @@
 
 {% block content %}
 <div style="margin-bottom: var(--space-6);">
-    <a href="/mods" class="btn-ghost" style="margin-bottom: var(--space-4);">← Back to Mods</a>
+    <a href="/mods" class="btn-ghost" style="margin-bottom: var(--space-4); display: inline-flex; align-items: center; gap: var(--space-2);">
+        <i data-lucide="arrow-left" style="width: 1rem; height: 1rem;"></i>
+        Back to Mods
+    </a>
     
     <!-- Mod Header -->
     <div style="display: flex; gap: var(--space-6); margin-bottom: var(--space-6);">
@@ -11,8 +14,8 @@
             <img src="{{ mod.thumbnail_url }}" alt="{{ mod.name }}" style="width: 100%; height: 100%; object-fit: cover;">
         </div>
         {% else %}
-        <div style="width: 12rem; height: 8rem; background: var(--bg-tertiary); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); font-size: var(--text-4xl); flex-shrink: 0;">
-            📦
+        <div style="width: 12rem; height: 8rem; background: var(--bg-tertiary); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); flex-shrink: 0;">
+            <i data-lucide="package" style="width: 3rem; height: 3rem;"></i>
         </div>
         {% endif %}
         
@@ -70,30 +73,48 @@
     
     <!-- Tabs -->
     <div style="border-bottom: 1px solid var(--border-primary); margin-bottom: var(--space-6);">
-        <div style="display: flex; gap: var(--space-4);">
+        <div style="display: flex; gap: var(--space-4); overflow-x: auto;">
             <button 
                 class="tab-button {% if active_tab == 'overview' %}active{% endif %}"
                 onclick="showTab('overview')"
-                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid {% if active_tab == 'overview' %}var(--accent-primary){% else %}transparent{% endif %}; color: {% if active_tab == 'overview' %}var(--accent-primary){% else %}var(--text-secondary){% endif %}; cursor: pointer; transition: all var(--transition-base);">
+                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid {% if active_tab == 'overview' %}var(--accent-primary){% else %}transparent{% endif %}; color: {% if active_tab == 'overview' %}var(--accent-primary){% else %}var(--text-secondary){% endif %}; cursor: pointer; transition: all var(--transition-base); display: flex; align-items: center; gap: var(--space-2); white-space: nowrap;">
+                <i data-lucide="info" style="width: 1rem; height: 1rem;"></i>
                 Overview
             </button>
             <button 
                 class="tab-button {% if active_tab == 'files' %}active{% endif %}"
                 onclick="showTab('files')"
-                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid {% if active_tab == 'files' %}var(--accent-primary){% else %}transparent{% endif %}; color: {% if active_tab == 'files' %}var(--accent-primary){% else %}var(--text-secondary){% endif %}; cursor: pointer; transition: all var(--transition-base);">
+                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid {% if active_tab == 'files' %}var(--accent-primary){% else %}transparent{% endif %}; color: {% if active_tab == 'files' %}var(--accent-primary){% else %}var(--text-secondary){% endif %}; cursor: pointer; transition: all var(--transition-base); display: flex; align-items: center; gap: var(--space-2); white-space: nowrap;">
+                <i data-lucide="folder-tree" style="width: 1rem; height: 1rem;"></i>
                 Files
             </button>
             <button 
                 class="tab-button {% if active_tab == 'dependencies' %}active{% endif %}"
                 onclick="showTab('dependencies')"
-                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid {% if active_tab == 'dependencies' %}var(--accent-primary){% else %}transparent{% endif %}; color: {% if active_tab == 'dependencies' %}var(--accent-primary){% else %}var(--text-secondary){% endif %}; cursor: pointer; transition: all var(--transition-base);">
+                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid {% if active_tab == 'dependencies' %}var(--accent-primary){% else %}transparent{% endif %}; color: {% if active_tab == 'dependencies' %}var(--accent-primary){% else %}var(--text-secondary){% endif %}; cursor: pointer; transition: all var(--transition-base); display: flex; align-items: center; gap: var(--space-2); white-space: nowrap;">
+                <i data-lucide="link" style="width: 1rem; height: 1rem;"></i>
                 Dependencies
             </button>
             <button 
                 class="tab-button {% if active_tab == 'conflicts' %}active{% endif %}"
                 onclick="showTab('conflicts')"
-                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid {% if active_tab == 'conflicts' %}var(--accent-primary){% else %}transparent{% endif %}; color: {% if active_tab == 'conflicts' %}var(--accent-primary){% else %}var(--text-secondary){% endif %}; cursor: pointer; transition: all var(--transition-base);">
+                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid {% if active_tab == 'conflicts' %}var(--accent-primary){% else %}transparent{% endif %}; color: {% if active_tab == 'conflicts' %}var(--accent-primary){% else %}var(--text-secondary){% endif %}; cursor: pointer; transition: all var(--transition-base); display: flex; align-items: center; gap: var(--space-2); white-space: nowrap;">
+                <i data-lucide="alert-triangle" style="width: 1rem; height: 1rem;"></i>
                 Conflicts
+            </button>
+            <button 
+                class="tab-button"
+                onclick="showTab('changelog')"
+                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); cursor: pointer; transition: all var(--transition-base); display: flex; align-items: center; gap: var(--space-2); white-space: nowrap;">
+                <i data-lucide="history" style="width: 1rem; height: 1rem;"></i>
+                Changelog
+            </button>
+            <button 
+                class="tab-button"
+                onclick="showTab('related')"
+                style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); cursor: pointer; transition: all var(--transition-base); display: flex; align-items: center; gap: var(--space-2); white-space: nowrap;">
+                <i data-lucide="thumbs-up" style="width: 1rem; height: 1rem;"></i>
+                Related
             </button>
         </div>
     </div>
@@ -104,18 +125,28 @@
             {% include "mods/detail_overview.html" %}
         </div>
         <div id="tab-files" class="tab-pane {% if active_tab == 'files' %}active{% endif %}" style="display: none;">
-            <div hx-get="/api/mods/{{ mod.id }}/files" hx-trigger="load" hx-swap="innerHTML">
+            <div hx-get="/api/mods/{{ mod.id }}/files/tree" hx-trigger="load" hx-swap="innerHTML">
                 Loading files...
             </div>
         </div>
         <div id="tab-dependencies" class="tab-pane {% if active_tab == 'dependencies' %}active{% endif %}" style="display: none;">
-            <div hx-get="/api/mods/{{ mod.id }}/dependencies" hx-trigger="load" hx-swap="innerHTML">
+            <div hx-get="/api/dependencies/tree?mod_id={{ mod.id }}" hx-trigger="load" hx-swap="innerHTML">
                 Loading dependencies...
             </div>
         </div>
         <div id="tab-conflicts" class="tab-pane {% if active_tab == 'conflicts' %}active{% endif %}" style="display: none;">
-            <div hx-get="/api/mods/{{ mod.id }}/conflicts" hx-trigger="load" hx-swap="innerHTML">
+            <div hx-get="/api/compatibility/conflicts?mod_id={{ mod.id }}" hx-trigger="load" hx-swap="innerHTML">
                 Loading conflicts...
+            </div>
+        </div>
+        <div id="tab-changelog" class="tab-pane" style="display: none;">
+            <div hx-get="/api/mods/{{ mod.id }}/changelog" hx-trigger="load" hx-swap="innerHTML">
+                Loading changelog...
+            </div>
+        </div>
+        <div id="tab-related" class="tab-pane" style="display: none;">
+            <div hx-get="/api/mods/{{ mod.id }}/related" hx-trigger="load" hx-swap="innerHTML">
+                Loading related mods...
             </div>
         </div>
     </div>

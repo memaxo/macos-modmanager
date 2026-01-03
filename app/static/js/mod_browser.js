@@ -60,7 +60,7 @@ function updateBulkSelection() {
 function bulkAction(action) {
     if (selectedMods.size === 0) return;
     
-    const modIds = Array.from(selectedMods);
+    const modIds = Array.from(selectedMods).map(Number);
     
     if (action === 'delete') {
         if (!confirm(`Are you sure you want to delete ${modIds.length} mod(s)?`)) {
@@ -79,15 +79,23 @@ function bulkAction(action) {
             mod_ids: modIds
         })
     })
-    .then(response => response.json())
-    .then(data => {
+    .then(async response => {
+        const text = await response.text();
+        // Check if response is HTML (toast) or JSON
+        if (text.trim().startsWith('<')) {
+            const notificationArea = document.getElementById('notification-area');
+            if (notificationArea) {
+                notificationArea.insertAdjacentHTML('beforeend', text);
+            }
+        }
+        
         // Refresh mod list
         htmx.trigger('#mod-list', 'refresh');
+        
         // Clear selection
         selectedMods.clear();
+        document.querySelectorAll('.mod-checkbox').forEach(cb => cb.checked = false);
         updateBulkSelection();
-        // Show notification
-        showNotification(`${action} completed for ${modIds.length} mod(s)`);
     })
     .catch(error => {
         showNotification(`Error: ${error.message}`, 'error');

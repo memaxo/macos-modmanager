@@ -6,23 +6,45 @@
         Conflict Resolution
     </h1>
     <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">
-        Resolve conflicts between mods
+        Resolve conflicts between mods when they modify the same game files.
     </p>
     
-    <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-4);">
-        <button class="btn btn-secondary" onclick="filterConflicts('all')">All</button>
-        <button class="btn btn-secondary" onclick="filterConflicts('critical')">Critical</button>
-        <button class="btn btn-secondary" onclick="filterConflicts('warning')">Warning</button>
-        <button class="btn btn-secondary" onclick="filterConflicts('resolved')">Resolved</button>
+    <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-6);">
+        <button class="btn btn-secondary active" hx-get="/api/compatibility/conflicts" hx-target="#conflict-list">All Conflicts</button>
+        <button class="btn btn-secondary" hx-get="/api/compatibility/conflicts?severity=critical" hx-target="#conflict-list">Critical</button>
+        <button class="btn btn-secondary" hx-get="/api/compatibility/conflicts?severity=warning" hx-target="#conflict-list">Warning</button>
     </div>
     
     <div id="conflict-list" 
          hx-get="/api/compatibility/conflicts"
-         hx-trigger="load"
+         hx-trigger="load, refresh from:body"
          hx-swap="innerHTML">
         <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
             Loading conflicts...
         </div>
     </div>
 </div>
+
+<!-- Modal Container -->
+<div id="modal-container" style="display: none; position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: var(--space-4);">
+    <!-- Content injected here -->
+</div>
+
+<style>
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+    }
+    .modal-content {
+        position: relative;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        width: 100%;
+        box-shadow: var(--shadow-2xl);
+        z-index: 51;
+    }
+</style>
 {% endblock %}

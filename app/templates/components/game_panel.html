@@ -1,0 +1,143 @@
+<!-- Game Status Panel -->
+<div class="card" style="padding: var(--space-6); margin-bottom: var(--space-6);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+        <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: var(--space-2);">
+            <i data-lucide="gamepad-2" style="width: 1.2rem; height: 1.2rem; color: var(--accent-primary);"></i>
+            Game Status
+        </h2>
+        <button 
+            class="btn btn-ghost" 
+            style="font-size: var(--text-sm);"
+            hx-get="/api/frameworks/game-panel"
+            hx-target="#game-panel"
+            hx-swap="innerHTML">
+            <i data-lucide="refresh-cw" style="width: 0.9rem; height: 0.9rem;"></i>
+        </button>
+    </div>
+    
+    <!-- Game Process Status -->
+    <div style="display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4); background: var(--bg-tertiary); border-radius: var(--radius-md); margin-bottom: var(--space-4);">
+        {% if game_status.running %}
+        <div style="width: 12px; height: 12px; border-radius: var(--radius-full); background: var(--accent-success); box-shadow: 0 0 8px var(--accent-success); animation: pulse 2s infinite;"></div>
+        <div style="flex: 1;">
+            <div style="font-weight: var(--font-semibold); color: var(--accent-success);">Running</div>
+            <div style="font-size: var(--text-sm); color: var(--text-secondary);">
+                PID: {{ game_status.pid }}
+                {% if game_status.uptime_seconds %}
+                • Uptime: {{ (game_status.uptime_seconds // 3600)|int }}h {{ ((game_status.uptime_seconds % 3600) // 60)|int }}m
+                {% endif %}
+            </div>
+        </div>
+        {% if game_status.memory_mb %}
+        <div style="text-align: right;">
+            <div style="font-size: var(--text-sm); color: var(--text-secondary);">Memory</div>
+            <div style="font-weight: var(--font-semibold); color: var(--text-primary);">{{ "%.1f"|format(game_status.memory_mb / 1024) }} GB</div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div style="width: 12px; height: 12px; border-radius: var(--radius-full); background: var(--text-tertiary);"></div>
+        <div style="flex: 1;">
+            <div style="font-weight: var(--font-semibold); color: var(--text-secondary);">Not Running</div>
+            <div style="font-size: var(--text-sm); color: var(--text-tertiary);">Game is not currently running</div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Launch Controls -->
+    <div style="display: flex; gap: var(--space-3); margin-bottom: var(--space-4);">
+        {% if not game_status.running %}
+        <button 
+            id="launch-btn"
+            class="btn btn-primary"
+            style="flex: 1; justify-content: center; gap: var(--space-2);"
+            hx-post="/api/launcher/launch"
+            hx-swap="none"
+            onclick="this.disabled=true; this.innerHTML='<i data-lucide=\\'loader-2\\' class=\\'animate-spin\\' style=\\'width: 1rem; height: 1rem;\\'></i> Launching...'">
+            <i data-lucide="play" style="width: 1rem; height: 1rem;"></i>
+            Launch with Mods
+        </button>
+        <button 
+            class="btn btn-secondary"
+            style="justify-content: center; gap: var(--space-2);"
+            title="Launch without mods">
+            <i data-lucide="shield" style="width: 1rem; height: 1rem;"></i>
+            Safe Mode
+        </button>
+        {% else %}
+        <button 
+            class="btn btn-secondary"
+            style="flex: 1; justify-content: center; gap: var(--space-2); color: var(--accent-error);"
+            title="Stop game">
+            <i data-lucide="square" style="width: 1rem; height: 1rem;"></i>
+            Stop Game
+        </button>
+        {% endif %}
+    </div>
+    
+    <!-- Recent Logs -->
+    {% if recent_logs %}
+    <div style="margin-top: var(--space-4);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
+            <h3 style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">
+                Recent Logs
+            </h3>
+            <a href="/logs" class="btn-ghost" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);">
+                View All →
+            </a>
+        </div>
+        <div style="background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: var(--radius-md); padding: var(--space-3); max-height: 150px; overflow-y: auto; font-family: monospace; font-size: var(--text-xs);">
+            {% for line in recent_logs %}
+            <div style="padding: var(--space-1) 0; color: {% if '[ERROR]' in line %}var(--accent-error){% elif '[WARN]' in line %}var(--accent-warning){% else %}var(--text-tertiary){% endif %}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                {{ line }}
+            </div>
+            {% endfor %}
+            {% if not recent_logs %}
+            <div style="color: var(--text-tertiary); text-align: center; padding: var(--space-4);">
+                No recent logs
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Errors -->
+    {% if errors %}
+    <div style="margin-top: var(--space-4);">
+        <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
+            <i data-lucide="alert-triangle" style="width: 1rem; height: 1rem; color: var(--accent-error);"></i>
+            <h3 style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: var(--accent-error); margin: 0;">
+                Recent Errors ({{ errors|length }})
+            </h3>
+        </div>
+        <div style="background: var(--danger-bg-subtle); border: 1px solid var(--danger-border); border-radius: var(--radius-md); padding: var(--space-3); max-height: 100px; overflow-y: auto; font-family: monospace; font-size: var(--text-xs);">
+            {% for error in errors %}
+            <div style="padding: var(--space-1) 0; color: var(--danger-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                {{ error }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+</style>
+
+<script>
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+</script>

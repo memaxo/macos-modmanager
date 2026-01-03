@@ -1,0 +1,72 @@
+<!-- Alternative Mods List -->
+<div class="alternatives-section">
+    <h4 style="font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-3); display: flex; align-items: center; gap: var(--space-2);">
+        <i data-lucide="shuffle" style="width: 18px; height: 18px; color: var(--accent-primary);"></i>
+        macOS Alternatives
+    </h4>
+    
+    {% if alternatives %}
+    <div class="alternatives-list">
+        {% for alt in alternatives %}
+        <div class="alternative-item" style="display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3); background: var(--bg-tertiary); border-radius: var(--radius-md); margin-bottom: var(--space-2);">
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-1);">
+                    <span style="font-weight: var(--font-medium); color: var(--text-primary);">{{ alt.mod_name }}</span>
+                    {% if alt.similarity >= 80 %}
+                    <span class="badge badge-success" style="font-size: 10px;">Very Similar</span>
+                    {% elif alt.similarity >= 50 %}
+                    <span class="badge badge-info" style="font-size: 10px;">Similar</span>
+                    {% endif %}
+                </div>
+                {% if alt.reason %}
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); margin: 0;">
+                    {{ alt.reason }}
+                </p>
+                {% endif %}
+                {% if alt.mod_url %}
+                <a href="{{ alt.mod_url }}" target="_blank" style="font-size: var(--text-xs); color: var(--accent-info); display: inline-flex; align-items: center; gap: 4px; margin-top: var(--space-1);">
+                    <i data-lucide="external-link" style="width: 12px; height: 12px;"></i>
+                    View Mod
+                </a>
+                {% endif %}
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: var(--space-1);">
+                <button class="btn-vote" hx-post="/api/compatibility-db/alternative/{{ alt.id }}/vote" hx-vals='{"is_upvote": true}' hx-swap="none">
+                    <i data-lucide="thumbs-up" style="width: 14px; height: 14px;"></i>
+                </button>
+                <span style="font-size: var(--text-xs); color: var(--text-tertiary);">{{ alt.votes_up - alt.votes_down }}</span>
+                <button class="btn-vote" hx-post="/api/compatibility-db/alternative/{{ alt.id }}/vote" hx-vals='{"is_upvote": false}' hx-swap="none">
+                    <i data-lucide="thumbs-down" style="width: 14px; height: 14px;"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="font-size: var(--text-sm); color: var(--text-tertiary); font-style: italic;">
+        No alternatives suggested yet.
+    </p>
+    {% endif %}
+    
+    <button class="btn btn-ghost" style="margin-top: var(--space-3);" onclick="showSuggestAlternativeForm({{ nexus_mod_id }})">
+        <i data-lucide="plus" style="width: 14px; height: 14px; margin-right: var(--space-1);"></i>
+        Suggest Alternative
+    </button>
+</div>
+
+<style>
+    .btn-vote {
+        background: transparent;
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-sm);
+        padding: var(--space-1);
+        cursor: pointer;
+        color: var(--text-tertiary);
+        transition: all var(--transition-base);
+    }
+    
+    .btn-vote:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+</style>

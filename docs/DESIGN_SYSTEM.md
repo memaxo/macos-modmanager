@@ -1,63 +1,56 @@
-# Design System - Night Owl Dark UI
+# Design System - Grey & Dark Slate Blue UI
 
 ## Design Principles
 
 1. **Professional Elegance** - Refined, polished desktop-inspired interface
-2. **Night Owl Aesthetic** - Deep blue-black backgrounds with vibrant accents
+2. **Slate & Grey Aesthetic** - Muted grey backgrounds with Dark Slate Blue accents
 3. **Clarity** - Clear hierarchy and visual feedback
 4. **Consistency** - Unified patterns across all views
 5. **Accessibility** - High contrast, readable text
 6. **Efficiency** - Quick access to common actions
 
-## Color Palette (Night Owl Inspired)
+## Color Palette (Slate & Grey)
 
 ### Primary Colors
 ```css
---bg-primary: #011627;        /* Deep blue-black (Night Owl base) */
---bg-secondary: #0d2935;      /* Slightly lighter for cards */
---bg-tertiary: #1a3a4a;       /* Elevated surfaces */
---bg-hover: #1e4252;          /* Hover states */
---bg-active: #234a5e;         /* Active/pressed states */
+--bg-primary: #121212;        /* Deep Grey base */
+--bg-secondary: #1e1e1e;      /* Apple-style dark grey for cards */
+--bg-tertiary: #252525;       /* Elevated surfaces */
+--bg-hover: #2c2c2c;          /* Hover states */
+--bg-active: #333333;         /* Active/pressed states */
 
---border-primary: #1e3a52;    /* Subtle borders */
---border-secondary: #2d4a62;  /* Active borders */
---border-accent: #3d5a72;     /* Focus borders */
+--border-primary: #333333;    /* Subtle borders */
+--border-secondary: #444444;  /* Active borders */
+--border-accent: #483d8b;     /* Dark Slate Blue borders */
 ```
 
 ### Accent Colors
 ```css
---accent-primary: #7fdbca;    /* Teal - Primary actions (Night Owl) */
---accent-hover: #6bcab8;      /* Darker teal on hover */
---accent-active: #5ab9a6;     /* Active state */
+--accent-primary: #483d8b;    /* Dark Slate Blue - Primary actions */
+--accent-hover: #5d54a4;      /* Lighter slate on hover */
+--accent-active: #3a3270;     /* Darker slate state */
 
---accent-success: #addb67;   /* Green - Success states */
---accent-warning: #ffcb6b;   /* Yellow - Warnings */
---accent-error: #ff5874;     /* Pink-red - Errors */
---accent-info: #82aaff;      /* Blue - Info */
-```
-
-### Night Owl Specific Colors
-```css
---nightowl-purple: #c792ea;   /* Purple accents */
---nightowl-orange: #f78c6c;   /* Orange accents */
---nightowl-yellow: #ffcb6b;   /* Yellow accents */
+--accent-success: #81b88b;   /* Muted Green - Success states */
+--accent-warning: #e2b85b;   /* Muted Yellow - Warnings */
+--accent-error: #c35a5a;     /* Muted Red - Errors */
+--accent-info: #483d8b;      /* Dark Slate Blue - Info */
 ```
 
 ### Text Colors
 ```css
---text-primary: #d6deeb;      /* Primary text (Night Owl) */
---text-secondary: #a7b8c8;    /* Secondary text */
---text-tertiary: #637777;     /* Tertiary/muted text */
---text-disabled: #4a5a6a;     /* Disabled text */
+--text-primary: #e0e0e0;      /* Primary text */
+--text-secondary: #a0a0a0;    /* Secondary text */
+--text-tertiary: #666666;     /* Muted text */
+--text-disabled: #444444;     /* Disabled text */
 ```
 
 ### Status Colors
 ```css
---status-enabled: #addb67;    /* Enabled mods (green) */
---status-disabled: #637777;   /* Disabled mods */
---status-conflict: #ff5874;   /* Conflicts (pink-red) */
---status-warning: #ffcb6b;    /* Warnings (yellow) */
---status-info: #82aaff;       /* Information (blue) */
+--status-enabled: #81b88b;    /* Enabled mods (muted green) */
+--status-disabled: #666666;   /* Disabled mods */
+--status-conflict: #c35a5a;   /* Conflicts (muted red) */
+--status-warning: #e2b85b;    /* Warnings (muted yellow) */
+--status-info: #483d8b;       /* Information (slate blue) */
 ```
 
 ## Typography
@@ -131,7 +124,7 @@ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
 --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 10px 10px -5px rgba(0, 0, 0, 0.6);
 --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
 --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.4);
---shadow-glow: 0 0 20px rgba(127, 219, 202, 0.3); /* Teal glow for focus */
+--shadow-glow: 0 0 20px rgba(72, 61, 139, 0.3); /* Dark Slate Blue glow for focus */
 ```
 
 ## Component Styles
@@ -233,7 +226,7 @@ box-shadow: var(--shadow-inner);
 :focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(127, 219, 202, 0.15), var(--shadow-inner);
+  box-shadow: 0 0 0 3px rgba(72, 61, 139, 0.15), var(--shadow-inner);
   background: var(--bg-hover);
 }
 
@@ -284,9 +277,9 @@ border: 1px solid transparent;
   border-color: rgba(255, 88, 116, 0.2);
 }
 .info { 
-  background: rgba(130, 170, 255, 0.15); 
+  background: rgba(72, 61, 139, 0.15); 
   color: var(--accent-info);
-  border-color: rgba(130, 170, 255, 0.2);
+  border-color: rgba(72, 61, 139, 0.2);
 }
 ```
 
@@ -300,7 +293,7 @@ box-shadow: var(--shadow-2xl);
 padding: var(--space-6);
 max-width: 32rem;
 backdrop-filter: blur(20px);
-border: 1px solid rgba(127, 219, 202, 0.1);
+border: 1px solid rgba(72, 61, 139, 0.1);
 ```
 
 ### Navigation
@@ -560,5 +553,5 @@ gap: var(--space-6);
 - Layered shadows for depth
 - Backdrop blur for glassmorphism effect
 - Smooth cubic-bezier transitions
-- Teal accent color (Night Owl signature)
+- Dark Slate Blue accent color with grey backgrounds
 - Professional, refined aesthetic

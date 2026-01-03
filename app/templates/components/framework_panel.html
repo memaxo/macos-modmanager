@@ -1,0 +1,246 @@
+<!-- Framework Status Panel -->
+<div class="card" style="padding: var(--space-6); margin-bottom: var(--space-6);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+        <h2 style="font-size: var(--text-xl); font-weight: var(--font-semibold); color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: var(--space-2);">
+            <i data-lucide="cpu" style="width: 1.2rem; height: 1.2rem; color: var(--accent-primary);"></i>
+            Mod Frameworks
+        </h2>
+        <div style="display: flex; gap: var(--space-2);">
+            <button 
+                class="btn btn-ghost" 
+                style="font-size: var(--text-sm);"
+                hx-get="/api/frameworks/panel"
+                hx-target="#framework-panel"
+                hx-swap="innerHTML">
+                <i data-lucide="refresh-cw" style="width: 0.9rem; height: 0.9rem;"></i>
+            </button>
+        </div>
+    </div>
+    
+    {% if not status.game_detected %}
+    <div style="padding: var(--space-4); background: var(--danger-bg-subtle); border: 1px solid var(--danger-border); border-radius: var(--radius-md); margin-bottom: var(--space-4);">
+        <div style="display: flex; align-items: center; gap: var(--space-2); color: var(--danger-text);">
+            <i data-lucide="alert-circle" style="width: 1.1rem; height: 1.1rem;"></i>
+            <span style="font-weight: var(--font-semibold);">Game Not Detected</span>
+        </div>
+        <p style="color: var(--text-secondary); font-size: var(--text-sm); margin-top: var(--space-2);">
+            Cyberpunk 2077 installation not found. Please install the game first.
+        </p>
+    </div>
+    {% else %}
+    
+    <!-- Framework Grid -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4);">
+        <!-- RED4ext -->
+        <div class="framework-card" style="padding: var(--space-4); background: var(--bg-tertiary); border-radius: var(--radius-md); border: 1px solid {% if status.red4ext.installed and status.red4ext.healthy %}var(--success-border){% elif status.red4ext.installed %}var(--warning-border){% else %}var(--border-primary){% endif %};">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3);">
+                <div>
+                    <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--text-primary); margin: 0;">RED4ext</h3>
+                    <p style="font-size: var(--text-xs); color: var(--text-tertiary); margin: 0;">Mod Loader</p>
+                </div>
+                {% if status.red4ext.installed %}
+                    {% if status.red4ext.healthy %}
+                        <span class="badge badge-success">✅ Installed</span>
+                    {% else %}
+                        <span class="badge badge-warning">⚠️ Issues</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge" style="background: var(--bg-hover); color: var(--text-secondary);">Not Installed</span>
+                {% endif %}
+            </div>
+            
+            {% if status.red4ext.version %}
+            <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-2);">
+                v{{ status.red4ext.version }}
+                {% if status.red4ext.update_available %}
+                <span style="color: var(--accent-info);">→ v{{ status.red4ext.latest_version }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <div style="display: flex; gap: var(--space-2); margin-top: var(--space-3);">
+                {% if not status.red4ext.installed %}
+                <button 
+                    class="btn btn-primary" 
+                    style="flex: 1; font-size: var(--text-xs); padding: var(--space-2);"
+                    hx-post="/api/frameworks/red4ext/install"
+                    hx-target="#framework-panel"
+                    hx-swap="innerHTML"
+                    hx-indicator="#red4ext-spinner">
+                    Install
+                </button>
+                {% elif status.red4ext.update_available %}
+                <button 
+                    class="btn btn-secondary" 
+                    style="flex: 1; font-size: var(--text-xs); padding: var(--space-2);"
+                    hx-post="/api/frameworks/red4ext/update"
+                    hx-target="#framework-panel"
+                    hx-swap="innerHTML">
+                    Update
+                </button>
+                {% else %}
+                <button 
+                    class="btn btn-ghost" 
+                    style="flex: 1; font-size: var(--text-xs); padding: var(--space-2);"
+                    hx-post="/api/frameworks/red4ext/verify"
+                    hx-target="#framework-panel"
+                    hx-swap="innerHTML">
+                    Verify
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- TweakXL -->
+        <div class="framework-card" style="padding: var(--space-4); background: var(--bg-tertiary); border-radius: var(--radius-md); border: 1px solid {% if status.tweakxl.installed and status.tweakxl.healthy %}var(--success-border){% elif status.tweakxl.installed %}var(--warning-border){% else %}var(--border-primary){% endif %};">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3);">
+                <div>
+                    <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--text-primary); margin: 0;">TweakXL</h3>
+                    <p style="font-size: var(--text-xs); color: var(--text-tertiary); margin: 0;">Tweak System</p>
+                </div>
+                {% if status.tweakxl.installed %}
+                    {% if status.tweakxl.healthy %}
+                        <span class="badge badge-success">✅ Installed</span>
+                    {% else %}
+                        <span class="badge badge-warning">⚠️ Issues</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge" style="background: var(--bg-hover); color: var(--text-secondary);">Not Installed</span>
+                {% endif %}
+            </div>
+            
+            {% if status.tweakxl.version %}
+            <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-2);">
+                v{{ status.tweakxl.version }}
+                {% if status.tweakxl.update_available %}
+                <span style="color: var(--accent-info);">→ v{{ status.tweakxl.latest_version }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <div style="display: flex; gap: var(--space-2); margin-top: var(--space-3);">
+                {% if not status.tweakxl.installed %}
+                <button 
+                    class="btn btn-primary" 
+                    style="flex: 1; font-size: var(--text-xs); padding: var(--space-2);"
+                    hx-post="/api/frameworks/tweakxl/install"
+                    hx-target="#framework-panel"
+                    hx-swap="innerHTML">
+                    Install
+                </button>
+                {% elif status.tweakxl.update_available %}
+                <button 
+                    class="btn btn-secondary" 
+                    style="flex: 1; font-size: var(--text-xs); padding: var(--space-2);"
+                    hx-post="/api/frameworks/tweakxl/update"
+                    hx-target="#framework-panel"
+                    hx-swap="innerHTML">
+                    Update
+                </button>
+                {% else %}
+                <button 
+                    class="btn btn-ghost" 
+                    style="flex: 1; font-size: var(--text-xs); padding: var(--space-2);"
+                    hx-post="/api/frameworks/tweakxl/verify"
+                    hx-target="#framework-panel"
+                    hx-swap="innerHTML">
+                    Verify
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- ArchiveXL -->
+        <div class="framework-card" style="padding: var(--space-4); background: var(--bg-tertiary); border-radius: var(--radius-md); border: 1px solid {% if status.archivexl.installed and status.archivexl.healthy %}var(--success-border){% elif status.archivexl.installed %}var(--warning-border){% else %}var(--border-primary){% endif %};">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3);">
+                <div>
+                    <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--text-primary); margin: 0;">ArchiveXL</h3>
+                    <p style="font-size: var(--text-xs); color: var(--text-tertiary); margin: 0;">Archive Loader</p>
+                </div>
+                {% if status.archivexl.installed %}
+                    {% if status.archivexl.healthy %}
+                        <span class="badge badge-success">✅ Installed</span>
+                    {% else %}
+                        <span class="badge badge-warning">⚠️ Issues</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge" style="background: var(--bg-hover); color: var(--text-secondary);">Not Installed</span>
+                {% endif %}
+            </div>
+            
+            {% if status.archivexl.version %}
+            <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-2);">
+                v{{ status.archivexl.version }}
+                {% if status.archivexl.update_available %}
+                <span style="color: var(--accent-info);">→ v{{ status.archivexl.latest_version }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <div style="display: flex; gap: var(--space-2); margin-top: var(--space-3);">
+                {% if not status.archivexl.installed %}
+                <button 
+                    class="btn btn-primary" 
+                    style="flex: 1; font-size: var(--text-xs); padding: var(--space-2);"
+                    hx-post="/api/frameworks/archivexl/install"
+                    hx-target="#framework-panel"
+                    hx-swap="innerHTML">
+                    Install
+                </button>
+                {% elif status.archivexl.update_available %}
+                <button 
+                    class="btn btn-secondary" 
+                    style="flex: 1; font-size: var(--text-xs); padding: var(--space-2);"
+                    hx-post="/api/frameworks/archivexl/update"
+                    hx-target="#framework-panel"
+                    hx-swap="innerHTML">
+                    Update
+                </button>
+                {% else %}
+                <button 
+                    class="btn btn-ghost" 
+                    style="flex: 1; font-size: var(--text-xs); padding: var(--space-2);"
+                    hx-post="/api/frameworks/archivexl/verify"
+                    hx-target="#framework-panel"
+                    hx-swap="innerHTML">
+                    Verify
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div style="display: flex; gap: var(--space-3); margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-primary);">
+        <button 
+            class="btn btn-secondary" 
+            style="font-size: var(--text-sm);"
+            hx-post="/api/frameworks/install-all"
+            hx-target="#framework-panel"
+            hx-swap="innerHTML">
+            <i data-lucide="download" style="width: 0.9rem; height: 0.9rem; margin-right: var(--space-1);"></i>
+            Install All
+        </button>
+        <button 
+            class="btn btn-secondary" 
+            style="font-size: var(--text-sm);"
+            hx-post="/api/frameworks/update-all"
+            hx-target="#framework-panel"
+            hx-swap="innerHTML">
+            <i data-lucide="refresh-cw" style="width: 0.9rem; height: 0.9rem; margin-right: var(--space-1);"></i>
+            Update All
+        </button>
+        <a href="https://github.com/memaxo/RED4ext-macos" target="_blank" class="btn btn-ghost" style="font-size: var(--text-sm); margin-left: auto;">
+            <i data-lucide="github" style="width: 0.9rem; height: 0.9rem; margin-right: var(--space-1);"></i>
+            GitHub
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Re-initialize Lucide icons after HTMX swap
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+</script>

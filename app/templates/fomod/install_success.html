@@ -1,0 +1,60 @@
+<!-- FOMOD Install Success -->
+<div id="fomod-wizard-backdrop" 
+     class="modal-backdrop"
+     style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: var(--z-modal-backdrop); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    
+    <div class="modal-content" 
+         style="background: var(--bg-secondary); border-radius: var(--radius-xl); box-shadow: var(--shadow-2xl); width: 90%; max-width: 500px; padding: var(--space-8); border: 1px solid var(--border-primary); text-align: center;">
+        
+        <!-- Success Icon -->
+        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--accent-success), #8bc34a); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-5); box-shadow: 0 4px 20px rgba(173, 219, 103, 0.4);">
+            <i data-lucide="check" style="width: 2.5rem; height: 2.5rem; color: var(--bg-primary);"></i>
+        </div>
+        
+        <h2 style="font-size: var(--text-xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
+            Installation Complete!
+        </h2>
+        
+        <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">
+            <strong style="color: var(--text-primary);">{{ mod.name }}</strong> has been successfully installed.
+        </p>
+        
+        <!-- Stats -->
+        <div style="display: flex; justify-content: center; gap: var(--space-6); margin-bottom: var(--space-6); padding: var(--space-4); background: var(--bg-primary); border-radius: var(--radius-lg);">
+            <div style="text-align: center;">
+                <p style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--accent-primary);">{{ files_installed }}</p>
+                <p style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase;">Files Installed</p>
+            </div>
+            <div style="width: 1px; background: var(--border-primary);"></div>
+            <div style="text-align: center;">
+                <p style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--accent-success);">
+                    <i data-lucide="check-circle" style="width: 1.5rem; height: 1.5rem;"></i>
+                </p>
+                <p style="font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase;">Status</p>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div style="display: flex; gap: var(--space-3); justify-content: center;">
+            <a href="/mods/{{ mod.id }}" 
+               class="btn btn-secondary"
+               style="gap: var(--space-2);">
+                <i data-lucide="info" style="width: 1rem; height: 1rem;"></i>
+                View Mod
+            </a>
+            <button type="button"
+                    onclick="document.getElementById('fomod-wizard-container').innerHTML = ''"
+                    class="btn btn-primary"
+                    style="gap: var(--space-2);">
+                <i data-lucide="check" style="width: 1rem; height: 1rem;"></i>
+                Done
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

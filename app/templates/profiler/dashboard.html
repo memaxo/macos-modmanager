@@ -1,0 +1,623 @@
+{% extends "base.html" %}
+
+{% block title %}GPU Performance Profiler - Cyberpunk 2077 macOS Mod Manager{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+    :root {
+        --profiler-primary: #00d4aa;
+        --profiler-warning: #ffa500;
+        --profiler-danger: #ff4757;
+        --profiler-bg: #0a0e14;
+        --profiler-card: #141a22;
+        --profiler-border: #1e2832;
+    }
+    
+    .profiler-container {
+        background: var(--profiler-bg);
+        min-height: 100vh;
+        padding: 2rem;
+    }
+    
+    .profiler-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--profiler-border);
+    }
+    
+    .profiler-title {
+        font-family: 'Orbitron', 'Rajdhani', sans-serif;
+        font-size: 1.8rem;
+        color: var(--profiler-primary);
+        letter-spacing: 2px;
+    }
+    
+    .profiler-subtitle {
+        color: #6b7c8a;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .status-badge.stopped {
+        background: rgba(107, 124, 138, 0.2);
+        color: #6b7c8a;
+    }
+    
+    .status-badge.running {
+        background: rgba(0, 212, 170, 0.2);
+        color: var(--profiler-primary);
+        animation: pulse 2s infinite;
+    }
+    
+    .status-badge.error {
+        background: rgba(255, 71, 87, 0.2);
+        color: var(--profiler-danger);
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    .profiler-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .metric-card {
+        background: var(--profiler-card);
+        border: 1px solid var(--profiler-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        border-color: var(--profiler-primary);
+        box-shadow: 0 0 20px rgba(0, 212, 170, 0.1);
+    }
+    
+    .metric-label {
+        color: #6b7c8a;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-value {
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #fff;
+    }
+    
+    .metric-value.good { color: var(--profiler-primary); }
+    .metric-value.warning { color: var(--profiler-warning); }
+    .metric-value.danger { color: var(--profiler-danger); }
+    
+    .metric-unit {
+        font-size: 1rem;
+        color: #6b7c8a;
+        margin-left: 0.25rem;
+    }
+    
+    .chart-container {
+        background: var(--profiler-card);
+        border: 1px solid var(--profiler-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .chart-title {
+        color: #fff;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .recommendations-container {
+        background: var(--profiler-card);
+        border: 1px solid var(--profiler-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+    
+    .recommendation {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        border-left: 4px solid;
+    }
+    
+    .recommendation.high {
+        background: rgba(255, 71, 87, 0.1);
+        border-color: var(--profiler-danger);
+    }
+    
+    .recommendation.medium {
+        background: rgba(255, 165, 0, 0.1);
+        border-color: var(--profiler-warning);
+    }
+    
+    .recommendation.low {
+        background: rgba(0, 212, 170, 0.1);
+        border-color: var(--profiler-primary);
+    }
+    
+    .recommendation-category {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.7;
+        margin-bottom: 0.25rem;
+    }
+    
+    .recommendation-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #fff;
+    }
+    
+    .recommendation-desc {
+        font-size: 0.9rem;
+        color: #9ca3af;
+        line-height: 1.5;
+    }
+    
+    .recommendation-gain {
+        font-size: 0.85rem;
+        color: var(--profiler-primary);
+        margin-top: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .btn-profiler {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+    }
+    
+    .btn-start {
+        background: var(--profiler-primary);
+        color: #0a0e14;
+    }
+    
+    .btn-start:hover {
+        background: #00ffcc;
+        transform: translateY(-2px);
+    }
+    
+    .btn-stop {
+        background: var(--profiler-danger);
+        color: #fff;
+    }
+    
+    .btn-stop:hover {
+        background: #ff6b7a;
+    }
+    
+    .btn-analyze {
+        background: transparent;
+        border: 1px solid var(--profiler-primary);
+        color: var(--profiler-primary);
+    }
+    
+    .btn-analyze:hover {
+        background: rgba(0, 212, 170, 0.1);
+    }
+    
+    .binary-analysis {
+        background: var(--profiler-card);
+        border: 1px solid var(--profiler-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .analysis-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--profiler-border);
+    }
+    
+    .analysis-item:last-child {
+        border-bottom: none;
+    }
+    
+    .theory-box {
+        background: linear-gradient(135deg, rgba(0, 212, 170, 0.1) 0%, rgba(0, 100, 80, 0.1) 100%);
+        border: 1px solid rgba(0, 212, 170, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .theory-title {
+        color: var(--profiler-primary);
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .theory-text {
+        color: #9ca3af;
+        line-height: 1.6;
+        font-size: 0.95rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profiler-container">
+    <!-- Header -->
+    <div class="profiler-header">
+        <div>
+            <h1 class="profiler-title">⚡ GPU PERFORMANCE PROFILER</h1>
+            <p class="profiler-subtitle">
+                MetalFX / FSR / Ray Tracing Analysis for Cyberpunk 2077 macOS
+            </p>
+        </div>
+        <div>
+            <span id="profiler-status" class="status-badge stopped">
+                <span class="status-dot"></span>
+                <span class="status-text">STOPPED</span>
+            </span>
+        </div>
+    </div>
+    
+    <!-- Theory Box -->
+    <div class="theory-box">
+        <div class="theory-title">
+            <span>🔬</span> Research Hypothesis
+        </div>
+        <div class="theory-text">
+            <strong>Theory:</strong> Path tracing and ray tracing are unoptimized for macOS, and there are 
+            real performance gains possible if MetalFX/AMD FSR/Apple Silicon GPU were properly optimized.
+            <br><br>
+            <strong>Key Insight:</strong> MetalFX is built on AMD's FidelityFX Super Resolution (FSR) technology. 
+            Apple has wrapped FSR in their proprietary MetalFX framework but hasn't necessarily optimized it 
+            for Apple Silicon's unified memory architecture.
+        </div>
+    </div>
+    
+    <!-- Controls -->
+    <div style="margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+        <button id="btn-start" class="btn-profiler btn-start" onclick="startProfiler()">
+            <span>▶</span> Start Profiling
+        </button>
+        <button id="btn-stop" class="btn-profiler btn-stop" onclick="stopProfiler()" style="display: none;">
+            <span>■</span> Stop Profiling
+        </button>
+        <button class="btn-profiler btn-analyze" onclick="analyzeBinary()">
+            <span>🔍</span> Analyze Binary
+        </button>
+        <button class="btn-profiler btn-analyze" onclick="loadRecommendations()">
+            <span>💡</span> Get Recommendations
+        </button>
+    </div>
+    
+    <!-- Real-time Metrics -->
+    <div class="profiler-grid">
+        <div class="metric-card">
+            <div class="metric-label">Frames Per Second</div>
+            <div class="metric-value" id="metric-fps">--<span class="metric-unit">fps</span></div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Frame Time</div>
+            <div class="metric-value" id="metric-frametime">--<span class="metric-unit">ms</span></div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Upscaling Time (FSR/MetalFX)</div>
+            <div class="metric-value" id="metric-upscaling">--<span class="metric-unit">ms</span></div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Ray Tracing Time</div>
+            <div class="metric-value" id="metric-raytracing">--<span class="metric-unit">ms</span></div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Memory Allocated</div>
+            <div class="metric-value" id="metric-memory">--<span class="metric-unit">MB</span></div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Command Buffers/Frame</div>
+            <div class="metric-value" id="metric-cmdbuffers">--</div>
+        </div>
+    </div>
+    
+    <!-- FPS Chart -->
+    <div class="chart-container">
+        <h3 class="chart-title">📊 Frame Time History</h3>
+        <canvas id="fps-chart" height="100"></canvas>
+    </div>
+    
+    <!-- Binary Analysis -->
+    <div class="binary-analysis" id="binary-analysis" style="display: none;">
+        <h3 class="chart-title">🔍 Binary Analysis Results</h3>
+        <div id="analysis-content"></div>
+    </div>
+    
+    <!-- Recommendations -->
+    <div class="recommendations-container">
+        <h3 class="chart-title">💡 Optimization Recommendations</h3>
+        <div id="recommendations-list">
+            <p style="color: #6b7c8a;">Click "Get Recommendations" to analyze optimization opportunities.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Chart setup
+let fpsChart;
+let frameTimeData = [];
+let updateInterval;
+
+document.addEventListener('DOMContentLoaded', () => {
+    initChart();
+    checkProfilerStatus();
+});
+
+function initChart() {
+    const ctx = document.getElementById('fps-chart').getContext('2d');
+    fpsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Frame Time (ms)',
+                data: [],
+                borderColor: '#00d4aa',
+                backgroundColor: 'rgba(0, 212, 170, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    display: false,
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#6b7c8a'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            animation: {
+                duration: 0
+            }
+        }
+    });
+}
+
+async function checkProfilerStatus() {
+    try {
+        const response = await fetch('/api/profiler/status');
+        const data = await response.json();
+        updateStatus(data);
+    } catch (e) {
+        console.error('Failed to check profiler status:', e);
+    }
+}
+
+function updateStatus(data) {
+    const statusBadge = document.getElementById('profiler-status');
+    const statusText = statusBadge.querySelector('.status-text');
+    const btnStart = document.getElementById('btn-start');
+    const btnStop = document.getElementById('btn-stop');
+    
+    statusBadge.className = 'status-badge ' + data.state;
+    statusText.textContent = data.state.toUpperCase();
+    
+    if (data.state === 'running') {
+        btnStart.style.display = 'none';
+        btnStop.style.display = 'inline-flex';
+    } else {
+        btnStart.style.display = 'inline-flex';
+        btnStop.style.display = 'none';
+    }
+    
+    if (!data.available) {
+        btnStart.disabled = true;
+        btnStart.title = 'Frida not installed';
+    }
+    
+    // Update metrics if running
+    if (data.state === 'running') {
+        updateMetrics(data);
+    }
+}
+
+function updateMetrics(data) {
+    const fps = parseFloat(data.current_fps) || 0;
+    const frameTime = parseFloat(data.current_frame_time_ms) || 0;
+    
+    // Update values
+    document.getElementById('metric-fps').innerHTML = 
+        `${fps.toFixed(0)}<span class="metric-unit">fps</span>`;
+    document.getElementById('metric-frametime').innerHTML = 
+        `${frameTime.toFixed(1)}<span class="metric-unit">ms</span>`;
+    document.getElementById('metric-upscaling').innerHTML = 
+        `${(parseFloat(data.upscaling_time_ms) || 0).toFixed(1)}<span class="metric-unit">ms</span>`;
+    document.getElementById('metric-raytracing').innerHTML = 
+        `${(parseFloat(data.ray_tracing_time_ms) || 0).toFixed(1)}<span class="metric-unit">ms</span>`;
+    document.getElementById('metric-memory').innerHTML = 
+        `${(parseFloat(data.memory_mb) || 0).toFixed(0)}<span class="metric-unit">MB</span>`;
+    document.getElementById('metric-cmdbuffers').textContent = data.command_buffers || '--';
+    
+    // Color coding for FPS
+    const fpsEl = document.getElementById('metric-fps');
+    fpsEl.classList.remove('good', 'warning', 'danger');
+    if (fps >= 60) fpsEl.classList.add('good');
+    else if (fps >= 30) fpsEl.classList.add('warning');
+    else if (fps > 0) fpsEl.classList.add('danger');
+    
+    // Update chart
+    frameTimeData.push(frameTime);
+    if (frameTimeData.length > 100) frameTimeData.shift();
+    
+    fpsChart.data.labels = frameTimeData.map((_, i) => i);
+    fpsChart.data.datasets[0].data = frameTimeData;
+    fpsChart.update('none');
+}
+
+async function startProfiler() {
+    try {
+        const response = await fetch('/api/profiler/start', { method: 'POST' });
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Start polling for updates
+            updateInterval = setInterval(checkProfilerStatus, 100);
+            checkProfilerStatus();
+        } else {
+            alert(data.detail || 'Failed to start profiler');
+        }
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
+}
+
+async function stopProfiler() {
+    try {
+        if (updateInterval) {
+            clearInterval(updateInterval);
+            updateInterval = null;
+        }
+        
+        const response = await fetch('/api/profiler/stop', { method: 'POST' });
+        const data = await response.json();
+        
+        checkProfilerStatus();
+        
+        if (data.report) {
+            displayReport(data.report);
+        }
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
+}
+
+async function analyzeBinary() {
+    const analysisDiv = document.getElementById('binary-analysis');
+    const contentDiv = document.getElementById('analysis-content');
+    
+    contentDiv.innerHTML = '<p style="color: #6b7c8a;">Analyzing game binary...</p>';
+    analysisDiv.style.display = 'block';
+    
+    try {
+        const response = await fetch('/api/profiler/analyze-binary');
+        const data = await response.json();
+        
+        contentDiv.innerHTML = `
+            <div class="analysis-item">
+                <span style="color: #9ca3af;">MetalFX Detected</span>
+                <span style="color: ${data.metalfx_detected ? '#00d4aa' : '#ff4757'}">
+                    ${data.metalfx_detected ? '✓ Yes' : '✗ No'}
+                </span>
+            </div>
+            <div class="analysis-item">
+                <span style="color: #9ca3af;">FSR Symbols Found</span>
+                <span style="color: #fff">${data.fsr_symbols_count}</span>
+            </div>
+            <div class="analysis-item">
+                <span style="color: #9ca3af;">Ray Tracing APIs</span>
+                <span style="color: ${data.ray_tracing_detected ? '#00d4aa' : '#6b7c8a'}">
+                    ${data.ray_tracing_detected ? '✓ In Use' : 'Not Detected'}
+                </span>
+            </div>
+            <div class="analysis-item">
+                <span style="color: #9ca3af;">Metal Frameworks</span>
+                <span style="color: #fff">${data.metal_frameworks.length > 0 ? data.metal_frameworks.join(', ') : 'Standard Metal'}</span>
+            </div>
+            <div style="margin-top: 1rem; padding: 1rem; background: rgba(0, 212, 170, 0.1); border-radius: 8px;">
+                <strong style="color: #00d4aa;">Analysis:</strong>
+                <p style="color: #9ca3af; margin-top: 0.5rem;">${data.analysis_summary}</p>
+            </div>
+        `;
+    } catch (e) {
+        contentDiv.innerHTML = `<p style="color: #ff4757;">Error: ${e.message}</p>`;
+    }
+}
+
+async function loadRecommendations() {
+    const container = document.getElementById('recommendations-list');
+    container.innerHTML = '<p style="color: #6b7c8a;">Loading recommendations...</p>';
+    
+    try {
+        const response = await fetch('/api/profiler/recommendations');
+        const recommendations = await response.json();
+        
+        if (recommendations.length === 0) {
+            container.innerHTML = '<p style="color: #6b7c8a;">No recommendations available.</p>';
+            return;
+        }
+        
+        container.innerHTML = recommendations.map(rec => `
+            <div class="recommendation ${rec.severity}">
+                <div class="recommendation-category">${rec.category}</div>
+                <div class="recommendation-title">${rec.title}</div>
+                <div class="recommendation-desc">${rec.description}</div>
+                <div class="recommendation-gain">⚡ ${rec.potential_gain}</div>
+            </div>
+        `).join('');
+    } catch (e) {
+        container.innerHTML = `<p style="color: #ff4757;">Error: ${e.message}</p>`;
+    }
+}
+
+function displayReport(report) {
+    alert(`
+Profiling Report
+================
+Total Frames: ${report.total_frames}
+Average FPS: ${report.avg_fps}
+Avg Frame Time: ${report.avg_frame_time_ms}ms
+99th Percentile: ${report.percentile_99_frame_time}ms
+95th Percentile: ${report.percentile_95_frame_time}ms
+Avg Upscaling: ${report.avg_upscaling_ms}ms
+Avg Ray Tracing: ${report.avg_raytracing_ms}ms
+
+Recommendations:
+${report.recommendations.join('\n\n')}
+    `);
+}
+</script>
+{% endblock %}

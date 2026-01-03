@@ -14,19 +14,19 @@
         <div style="display: flex; gap: var(--space-4);">
             <button 
                 class="tab-button active"
-                onclick="showInstallTab('upload')"
+                onclick="showInstallTab('upload', event)"
                 style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid var(--accent-primary); color: var(--accent-primary); cursor: pointer;">
                 Upload File
             </button>
             <button 
                 class="tab-button"
-                onclick="showInstallTab('nexus')"
+                onclick="showInstallTab('nexus', event)"
                 style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); cursor: pointer;">
                 From Nexus
             </button>
             <button 
                 class="tab-button"
-                onclick="showInstallTab('collection')"
+                onclick="showInstallTab('collection', event)"
                 style="padding: var(--space-2) var(--space-4); background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); cursor: pointer;">
                 From Collection
             </button>
@@ -127,6 +127,12 @@
     <!-- Installation Queue -->
     <div id="install-queue" style="margin-top: var(--space-8);"></div>
 </div>
+
+<!-- Modal container for mod preview -->
+<div id="mod-preview-modal-container"></div>
+
+<!-- Modal container for file selection -->
+<div id="file-selection-modal-container"></div>
 
 <script src="/static/js/install.js"></script>
 {% endblock %}

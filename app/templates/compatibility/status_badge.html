@@ -1,0 +1,27 @@
+<!-- Compatibility Status Badge -->
+{% set status_config = {
+    'works': {'color': 'var(--accent-success)', 'bg': 'var(--success-bg)', 'icon': 'check-circle', 'label': 'Works on macOS'},
+    'partial': {'color': 'var(--accent-warning)', 'bg': 'var(--warning-bg)', 'icon': 'alert-circle', 'label': 'Partial Support'},
+    'broken': {'color': 'var(--accent-error)', 'bg': 'var(--danger-bg-subtle)', 'icon': 'x-circle', 'label': 'Broken'},
+    'windows_only': {'color': 'var(--text-tertiary)', 'bg': 'var(--bg-tertiary)', 'icon': 'monitor', 'label': 'Windows Only'},
+    'unknown': {'color': 'var(--text-tertiary)', 'bg': 'var(--bg-tertiary)', 'icon': 'help-circle', 'label': 'Unknown'},
+} %}
+
+{% set config = status_config.get(status, status_config.unknown) %}
+
+<div class="compatibility-badge-full" style="display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: {{ config.bg }}; border: 1px solid {{ config.color }}33;">
+    <i data-lucide="{{ config.icon }}" style="width: 16px; height: 16px; color: {{ config.color }};"></i>
+    <span style="font-size: var(--text-sm); font-weight: var(--font-medium); color: {{ config.color }};">
+        {{ config.label }}
+    </span>
+    {% if confidence is defined and confidence > 0 %}
+    <span style="font-size: var(--text-xs); color: var(--text-tertiary);">
+        ({{ (confidence * 100)|int }}% confidence)
+    </span>
+    {% endif %}
+    {% if port_url %}
+    <a href="{{ port_url }}" target="_blank" style="margin-left: var(--space-2); font-size: var(--text-xs); color: var(--accent-info);">
+        macOS Port
+    </a>
+    {% endif %}
+</div>

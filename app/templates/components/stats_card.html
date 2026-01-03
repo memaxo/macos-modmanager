@@ -1,13 +1,28 @@
-<div class="card" style="text-align: center;">
-    <div style="font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--accent-primary); margin-bottom: var(--space-2);">
-        {{ value }}
+<div class="card" style="display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4);">
+    <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; color: var(--accent-primary);">
+        {% if label == "Total Mods" %}
+        <i data-lucide="package" style="width: 24px; height: 24px;"></i>
+        {% elif label == "Enabled Mods" %}
+        <i data-lucide="check-circle" style="width: 24px; height: 24px;"></i>
+        {% elif label == "Conflicts" %}
+        <i data-lucide="alert-triangle" style="width: 24px; height: 24px;"></i>
+        {% elif "Disk Usage" in label %}
+        <i data-lucide="hard-drive" style="width: 24px; height: 24px;"></i>
+        {% else %}
+        <i data-lucide="bar-chart-2" style="width: 24px; height: 24px;"></i>
+        {% endif %}
     </div>
-    <div style="font-size: var(--text-sm); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">
-        {{ label }}
+    <div>
+        <div style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: rgba(255, 255, 255, 1); line-height: 1;">
+            {{ value }}
+        </div>
+        <div style="font-size: var(--text-xs); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-top: var(--space-1);">
+            {{ label }}
+        </div>
+        {% if change is defined and change %}
+        <div style="font-size: 10px; color: {% if change > 0 %}var(--accent-success){% else %}var(--accent-error){% endif %}; margin-top: var(--space-1);">
+            {% if change > 0 %}+{% endif %}{{ change }} since last check
+        </div>
+        {% endif %}
     </div>
-    {% if change is defined and change %}
-    <div style="font-size: var(--text-xs); color: {% if change > 0 %}var(--accent-success){% else %}var(--accent-error){% endif %}; margin-top: var(--space-1);">
-        {% if change > 0 %}+{% endif %}{{ change }} from last check
-    </div>
-    {% endif %}
 </div>

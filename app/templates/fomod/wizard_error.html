@@ -1,0 +1,30 @@
+<!-- FOMOD Wizard Error -->
+<div style="padding: var(--space-8); text-align: center;">
+    <div style="width: 64px; height: 64px; background: var(--danger-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4);">
+        <i data-lucide="alert-circle" style="width: 2rem; height: 2rem; color: var(--accent-error);"></i>
+    </div>
+    
+    <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-2);">
+        Something went wrong
+    </h3>
+    
+    <p style="color: var(--text-secondary); font-size: var(--text-sm); margin-bottom: var(--space-6); max-width: 400px; margin-left: auto; margin-right: auto;">
+        {{ error }}
+    </p>
+    
+    <div style="display: flex; gap: var(--space-3); justify-content: center;">
+        <button type="button"
+                onclick="document.getElementById('fomod-wizard-container').innerHTML = ''"
+                class="btn btn-secondary"
+                style="gap: var(--space-2);">
+            <i data-lucide="x" style="width: 1rem; height: 1rem;"></i>
+            Close
+        </button>
+    </div>
+</div>
+
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

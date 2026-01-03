@@ -1,0 +1,340 @@
+<!-- Enhanced Sidebar Queue List -->
+{% if queue_items %}
+<div class="sidebar-queue">
+    <!-- Queue Items -->
+    <div class="queue-items-list">
+        {% for item in queue_items %}
+        <div class="queue-list-item" data-mod-id="{{ item.nexus_mod_id }}">
+            <!-- Thumbnail -->
+            {% if item.thumbnail_url %}
+            <img src="{{ item.thumbnail_url }}" alt="" class="queue-item-thumb">
+            {% else %}
+            <div class="queue-item-thumb queue-item-thumb-placeholder">
+                <i data-lucide="package" style="width: 14px; height: 14px;"></i>
+            </div>
+            {% endif %}
+            
+            <!-- Info -->
+            <div class="queue-item-details">
+                <span class="queue-item-title">{{ item.name or 'Unknown Mod' }}</span>
+                {% if item.author %}
+                <span class="queue-item-author">by {{ item.author }}</span>
+                {% endif %}
+                {% if item.size %}
+                <span class="queue-item-size">{{ item.size }}</span>
+                {% endif %}
+            </div>
+            
+            <!-- Priority Drag Handle -->
+            <div class="queue-item-handle" title="Drag to reorder">
+                <i data-lucide="grip-vertical" style="width: 12px; height: 12px;"></i>
+            </div>
+            
+            <!-- Remove Button -->
+            <button 
+                class="queue-item-remove"
+                hx-delete="/api/mods/queue/remove/{{ item.nexus_mod_id }}"
+                hx-swap="none"
+                hx-on::after-request="htmx.trigger(document.body, 'queueUpdated')"
+                title="Remove from queue">
+                <i data-lucide="x" style="width: 12px; height: 12px;"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Queue Summary -->
+    <div class="queue-summary">
+        <div class="queue-summary-item">
+            <i data-lucide="package" style="width: 12px; height: 12px;"></i>
+            <span>{{ queue_items|length }} mod{{ 's' if queue_items|length != 1 else '' }}</span>
+        </div>
+        {% if total_size %}
+        <div class="queue-summary-item">
+            <i data-lucide="hard-drive" style="width: 12px; height: 12px;"></i>
+            <span>{{ total_size }}</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Actions -->
+    <div class="queue-actions">
+        <button class="btn btn-secondary btn-sm"
+                hx-delete="/api/mods/queue/clear"
+                hx-swap="none"
+                hx-on::after-request="htmx.trigger(document.body, 'queueUpdated')">
+            <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+            Clear
+        </button>
+        <button id="install-all-btn" 
+                class="btn btn-primary btn-sm"
+                hx-post="/api/mods/queue/install-all"
+                hx-swap="none"
+                hx-indicator="#install-spinner">
+            <span id="install-spinner" class="htmx-indicator" style="display: none;">
+                <i data-lucide="loader-2" class="animate-spin" style="width: 12px; height: 12px;"></i>
+            </span>
+            <span class="install-btn-text">
+                <i data-lucide="download" style="width: 12px; height: 12px;"></i>
+                Install All
+            </span>
+        </button>
+    </div>
+</div>
+
+<style>
+.sidebar-queue {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.queue-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: var(--space-1);
+}
+
+.queue-list-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    transition: all var(--transition-base);
+    cursor: default;
+}
+
+.queue-list-item:hover {
+    border-color: var(--border-secondary);
+    background: var(--bg-hover);
+}
+
+.queue-item-thumb {
+    width: 40px;
+    height: 28px;
+    object-fit: cover;
+    border-radius: var(--radius-xs);
+    flex-shrink: 0;
+}
+
+.queue-item-thumb-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary);
+    color: var(--text-tertiary);
+}
+
+.queue-item-details {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.queue-item-title {
+    font-size: 11px;
+    font-weight: var(--font-medium);
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.queue-item-author {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.queue-item-size {
+    font-size: 9px;
+    color: var(--accent-info);
+}
+
+.queue-item-handle {
+    color: var(--text-tertiary);
+    cursor: grab;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    padding: var(--space-1);
+}
+
+.queue-list-item:hover .queue-item-handle {
+    opacity: 0.5;
+}
+
+.queue-item-handle:hover {
+    opacity: 1 !important;
+    color: var(--text-secondary);
+}
+
+.queue-item-remove {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.queue-list-item:hover .queue-item-remove {
+    opacity: 1;
+}
+
+.queue-item-remove:hover {
+    background: var(--danger-bg);
+    color: var(--accent-error);
+}
+
+.queue-summary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    padding: var(--space-2);
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    color: var(--text-tertiary);
+}
+
+.queue-summary-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.queue-actions {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.queue-actions .btn {
+    flex: 1;
+    justify-content: center;
+}
+
+.btn-sm {
+    padding: var(--space-2) var(--space-3);
+    font-size: 11px;
+    gap: 6px;
+}
+
+.htmx-indicator {
+    display: none;
+}
+
+.htmx-request .htmx-indicator {
+    display: inline-flex;
+}
+
+.htmx-request .install-btn-text {
+    display: none;
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+    // Update queue count badge
+    const count = {{ queue_items|length }};
+    const countEl = document.getElementById('queue-count');
+    if (countEl) {
+        countEl.textContent = count;
+        countEl.classList.toggle('hidden', count === 0);
+    }
+    lucide.createIcons();
+</script>
+
+{% else %}
+<!-- Empty Queue State -->
+<div class="queue-empty-state">
+    <div class="queue-empty-icon">
+        <i data-lucide="inbox"></i>
+    </div>
+    <p class="queue-empty-title">Queue is empty</p>
+    <p class="queue-empty-hint">
+        <i data-lucide="plus-circle" style="width: 12px; height: 12px;"></i>
+        Click + on mods to add
+    </p>
+</div>
+
+<style>
+.queue-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-6) var(--space-4);
+    text-align: center;
+}
+
+.queue-empty-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-lg);
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-3);
+}
+
+.queue-empty-icon i {
+    width: 24px;
+    height: 24px;
+    color: var(--text-tertiary);
+    opacity: 0.5;
+}
+
+.queue-empty-title {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-2);
+}
+
+.queue-empty-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+</style>
+
+<script>
+    const countEl = document.getElementById('queue-count');
+    if (countEl) {
+        countEl.textContent = '0';
+        countEl.classList.add('hidden');
+    }
+    const installBtn = document.getElementById('install-all-btn');
+    if (installBtn) {
+        installBtn.style.display = 'none';
+    }
+    lucide.createIcons();
+</script>
+{% endif %}

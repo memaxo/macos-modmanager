@@ -1,0 +1,115 @@
+<!-- Compatibility Report Form Component -->
+<div id="compatibility-report-form" class="card" style="padding: var(--space-6);">
+    <h3 style="font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4);">
+        Report Mod Compatibility
+    </h3>
+    
+    <form hx-post="/api/compatibility-db/report" 
+          hx-swap="outerHTML" 
+          hx-target="#compatibility-report-form">
+        
+        <!-- Mod Info (pre-filled if available) -->
+        <input type="hidden" name="nexus_mod_id" value="{{ mod.nexus_mod_id or '' }}">
+        
+        <div class="form-group" style="margin-bottom: var(--space-4);">
+            <label style="display: block; font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-secondary); margin-bottom: var(--space-1);">
+                Mod Name
+            </label>
+            <input type="text" 
+                   name="mod_name" 
+                   value="{{ mod.name or '' }}" 
+                   required
+                   class="form-input"
+                   style="width: 100%;"
+                   placeholder="Enter mod name">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: var(--space-4);">
+            <label style="display: block; font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-secondary); margin-bottom: var(--space-1);">
+                Compatibility Status
+            </label>
+            <select name="status" required class="form-select" style="width: 100%;">
+                <option value="">Select status...</option>
+                <option value="works">Works - Fully functional on macOS</option>
+                <option value="partial">Partial - Some features work</option>
+                <option value="broken">Broken - Does not work</option>
+                <option value="windows_only">Windows Only - Cannot work on macOS</option>
+            </select>
+        </div>
+        
+        <div class="form-row" style="display: flex; gap: var(--space-4); margin-bottom: var(--space-4);">
+            <div class="form-group" style="flex: 1;">
+                <label style="display: block; font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-secondary); margin-bottom: var(--space-1);">
+                    Mod Version (optional)
+                </label>
+                <input type="text" 
+                       name="mod_version" 
+                       class="form-input"
+                       style="width: 100%;"
+                       placeholder="e.g., 1.2.3">
+            </div>
+            
+            <div class="form-group" style="flex: 1;">
+                <label style="display: block; font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-secondary); margin-bottom: var(--space-1);">
+                    Game Version (optional)
+                </label>
+                <input type="text" 
+                       name="game_version" 
+                       class="form-input"
+                       style="width: 100%;"
+                       placeholder="e.g., 2.1">
+            </div>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: var(--space-4);">
+            <label style="display: block; font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-secondary); margin-bottom: var(--space-1);">
+                macOS Port URL (if available)
+            </label>
+            <input type="url" 
+                   name="macos_port_url" 
+                   class="form-input"
+                   style="width: 100%;"
+                   placeholder="https://github.com/...">
+            <p style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-1);">
+                If you know of a macOS-compatible version, paste the link here
+            </p>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: var(--space-6);">
+            <label style="display: block; font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-secondary); margin-bottom: var(--space-1);">
+                Notes (optional)
+            </label>
+            <textarea name="notes" 
+                      class="form-textarea"
+                      style="width: 100%; min-height: 80px; resize: vertical;"
+                      placeholder="Any additional details about compatibility, issues encountered, workarounds, etc."></textarea>
+        </div>
+        
+        <div style="display: flex; gap: var(--space-3);">
+            <button type="submit" class="btn btn-primary">
+                <i data-lucide="send" style="width: 1rem; height: 1rem; margin-right: var(--space-2);"></i>
+                Submit Report
+            </button>
+            <button type="button" class="btn btn-ghost" onclick="this.closest('.card').remove()">
+                Cancel
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-input, .form-select, .form-textarea {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        padding: var(--space-2) var(--space-3);
+        color: var(--text-primary);
+        font-size: var(--text-sm);
+    }
+    
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.2);
+    }
+</style>

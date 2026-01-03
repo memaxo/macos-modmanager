@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cyberpunk 2077 Mod Manager</title>
+    <title>{{ config.app_name if config else 'macOS Mod Manager' }}</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="/static/css/theme.css">
     <style>
         [x-cloak] { display: none !important; }
@@ -13,14 +14,15 @@
         .sidebar {
             background: var(--bg-secondary);
             border-right: 1px solid var(--border-primary);
-            width: 16rem;
+            width: 250px;
             min-height: calc(100vh - 4rem);
-            padding: var(--space-4);
+            padding: 0 var(--space-4) var(--space-4) var(--space-4);
             position: fixed;
             left: 0;
             top: 4rem;
             overflow-y: auto;
             transition: transform var(--transition-base);
+            box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.15);
         }
         
         .sidebar.collapsed {
@@ -34,9 +36,15 @@
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: var(--space-2);
+            gap: var(--space-3);
             transition: all var(--transition-base);
             margin-bottom: var(--space-1);
+        }
+
+        .sidebar-icon {
+            width: 1.1rem;
+            height: 1.1rem;
+            stroke-width: 2px;
         }
         
         .sidebar-item:hover {
@@ -60,7 +68,7 @@
         }
         
         .main-content {
-            margin-left: 16rem;
+            margin-left: 250px;
             transition: margin-left var(--transition-base);
         }
         
@@ -133,6 +141,143 @@
         .profile-dropdown.open {
             display: block;
         }
+
+        /* Queue Drawer Styles - Enhanced */
+        .drawer-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .drawer-backdrop.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 380px;
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-primary);
+            box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .drawer.open {
+            transform: translateX(0);
+        }
+        .drawer-header {
+            padding: var(--space-4) var(--space-5);
+            border-bottom: 1px solid var(--border-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(180deg, var(--bg-tertiary), var(--bg-secondary));
+        }
+        .drawer-header h3 {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        .drawer-header h3 i {
+            color: var(--accent-primary);
+        }
+        .drawer-close {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-md);
+            border: none;
+            background: transparent;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-fast);
+        }
+        .drawer-close:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        #queue-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Floating Toggle Button - Enhanced */
+        .queue-toggle-btn {
+            position: fixed;
+            bottom: var(--space-8);
+            right: var(--space-8);
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-full);
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
+            border: none;
+            color: var(--bg-primary);
+            box-shadow: 0 4px 20px rgba(72, 61, 139, 0.4), 0 0 0 0 rgba(72, 61, 139, 0.4);
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .queue-toggle-btn:hover {
+            transform: scale(1.1) translateY(-2px);
+            box-shadow: 0 8px 30px rgba(72, 61, 139, 0.5), 0 0 0 0 rgba(72, 61, 139, 0.4);
+        }
+        .queue-toggle-btn:active {
+            transform: scale(1.05);
+        }
+        .queue-toggle-btn.has-active {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 4px 20px rgba(72, 61, 139, 0.4), 0 0 0 0 rgba(72, 61, 139, 0.4); }
+            50% { box-shadow: 0 4px 20px rgba(72, 61, 139, 0.4), 0 0 0 10px rgba(72, 61, 139, 0); }
+        }
+        .badge-count {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            background: var(--accent-error);
+            color: white;
+            font-size: 11px;
+            font-weight: var(--font-bold);
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(255, 88, 116, 0.4);
+            animation: badge-pop 0.3s ease;
+        }
+        @keyframes badge-pop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .badge-count.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -140,31 +285,35 @@
         <div style="max-width: 1280px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 100%;">
             <div style="display: flex; align-items: center; gap: var(--space-4);">
                 <button class="sidebar-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">
-                    ☰
+                    <i data-lucide="menu" style="width: 1.2rem; height: 1.2rem;"></i>
                 </button>
-                <h1 style="font-size: var(--text-xl); font-weight: var(--font-bold); color: var(--text-primary);">Cyberpunk 2077 Mod Manager</h1>
+                <h1 style="font-size: var(--text-xl); font-weight: var(--font-bold); color: var(--text-primary);">{{ config.game_name if config else 'macOS Mod Manager' }}</h1>
             </div>
             <div style="display: flex; align-items: center; gap: var(--space-2);">
                 <div class="profile-switcher">
                     <button 
                         class="btn-ghost" 
                         onclick="document.querySelector('.profile-dropdown').classList.toggle('open')"
-                        style="padding: var(--space-2) var(--space-3);">
-                        Profile ▼
+                        style="padding: var(--space-2) var(--space-3); display: flex; align-items: center; gap: var(--space-2);">
+                        <i data-lucide="user" style="width: 1.1rem; height: 1.1rem;"></i>
+                        Profile
+                        <i data-lucide="chevron-down" style="width: 0.9rem; height: 0.9rem;"></i>
                     </button>
                     <div class="profile-dropdown" id="profile-dropdown">
                         <div style="padding: var(--space-2); border-bottom: 1px solid var(--border-primary); margin-bottom: var(--space-2);">
                             <div style="font-weight: var(--font-semibold); color: var(--text-primary);">Current Profile</div>
                             <div style="font-size: var(--text-sm); color: var(--text-secondary);" id="current-profile-name">Default</div>
                         </div>
-                        <a href="/profiles" class="sidebar-item" style="margin: 0;">Manage Profiles</a>
+                        <a href="/profiles" class="sidebar-item" style="margin: 0;">
+                            <i data-lucide="users" style="width: 1rem; height: 1.1rem;"></i> Manage Profiles
+                        </a>
                     </div>
                 </div>
                 <button class="btn-ghost" style="padding: var(--space-2);" onclick="showNotifications()">
-                    🔔
+                    <i data-lucide="bell" style="width: 1.1rem; height: 1.1rem;"></i>
                 </button>
                 <a href="/settings" class="btn-ghost" style="padding: var(--space-2);">
-                    ⚙️
+                    <i data-lucide="settings" style="width: 1.1rem; height: 1.1rem;"></i>
                 </a>
             </div>
         </div>
@@ -173,41 +322,119 @@
     <aside class="sidebar" id="sidebar">
         <nav>
             <a href="/" class="sidebar-item {% if request.url.path == '/' %}active{% endif %}">
-                <span>📊</span> Dashboard
+                <i data-lucide="layout-dashboard" class="sidebar-icon"></i> Dashboard
             </a>
-            <a href="/mods" class="sidebar-item {% if '/mods' in request.url.path %}active{% endif %}">
-                <span>📦</span> Mods
+            <a href="/mods" class="sidebar-item {% if '/mods' in request.url.path and '/explore' not in request.url.path %}active{% endif %}">
+                <i data-lucide="package" class="sidebar-icon"></i> Mods
             </a>
-            <a href="/collections" class="sidebar-item {% if '/collections' in request.url.path %}active{% endif %}">
-                <span>📚</span> Collections
+            <a href="/mods/explore" class="sidebar-item {% if '/explore' in request.url.path %}active{% endif %}">
+                <i data-lucide="globe" class="sidebar-icon"></i> Explore Nexus
+            </a>
+            <a href="/api/collections/browse" class="sidebar-item {% if '/collections/browse' in request.url.path %}active{% endif %}">
+                <i data-lucide="layers" class="sidebar-icon"></i> Browse Collections
+            </a>
+            <a href="/collections" class="sidebar-item {% if '/collections' in request.url.path and '/browse' not in request.url.path %}active{% endif %}">
+                <i data-lucide="library" class="sidebar-icon"></i> My Collections
             </a>
             <a href="/profiles" class="sidebar-item {% if '/profiles' in request.url.path %}active{% endif %}">
-                <span>👤</span> Profiles
+                <i data-lucide="users" class="sidebar-icon"></i> Profiles
             </a>
             <a href="/conflicts" class="sidebar-item {% if '/conflicts' in request.url.path %}active{% endif %}">
-                <span>⚠️</span> Conflicts
+                <i data-lucide="alert-triangle" class="sidebar-icon"></i> Conflicts
             </a>
             <a href="/dependencies" class="sidebar-item {% if '/dependencies' in request.url.path %}active{% endif %}">
-                <span>🔗</span> Dependencies
+                <i data-lucide="link" class="sidebar-icon"></i> Dependencies
             </a>
             <a href="/activity" class="sidebar-item {% if '/activity' in request.url.path %}active{% endif %}">
-                <span>📋</span> Activity Log
+                <i data-lucide="list-todo" class="sidebar-icon"></i> Activity Log
             </a>
             <a href="/settings" class="sidebar-item {% if '/settings' in request.url.path %}active{% endif %}">
-                <span>⚙️</span> Settings
+                <i data-lucide="settings" class="sidebar-icon"></i> Settings
             </a>
         </nav>
     </aside>
     
     <div class="main-content" id="main-content">
+        <!-- Notification Area -->
+        <div id="notification-area" class="notification-area"></div>
+        
         <main style="max-width: 1280px; margin: 0 auto; padding: var(--space-8) var(--space-6);">
             {% block content %}{% endblock %}
         </main>
     </div>
-    
-    <div class="notification-area" id="notification-area"></div>
-    
+
+    <!-- Installation Queue Drawer -->
+    <div id="queue-backdrop" class="drawer-backdrop" onclick="toggleQueue()"></div>
+    <div id="queue-drawer" class="drawer">
+        <div class="drawer-header">
+            <h3 style="font-size: var(--text-lg); font-weight: var(--font-bold); margin: 0;">
+                <i data-lucide="download-cloud" style="width: 20px; height: 20px;"></i>
+                Downloads & Tasks
+            </h3>
+            <button class="drawer-close" onclick="toggleQueue()" title="Close (Esc)">
+                <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+            </button>
+        </div>
+        <div id="queue-content" 
+             hx-get="/api/mods/install/queue" 
+             hx-trigger="load, every 2s" 
+             hx-swap="innerHTML">
+        </div>
+    </div>
+
+    <button id="queue-toggle" class="queue-toggle-btn" onclick="toggleQueue()" title="Downloads & Tasks">
+        <i data-lucide="download-cloud"></i>
+        <span id="queue-count" class="badge-count hidden">0</span>
+    </button>
+
     <script>
+        function toggleQueue() {
+            const drawer = document.getElementById('queue-drawer');
+            const backdrop = document.getElementById('queue-backdrop');
+            const isOpen = drawer.classList.contains('open');
+            
+            drawer.classList.toggle('open');
+            backdrop.classList.toggle('open');
+            
+            // Prevent body scroll when drawer is open
+            document.body.style.overflow = isOpen ? '' : 'hidden';
+        }
+        
+        // Close drawer with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const drawer = document.getElementById('queue-drawer');
+                if (drawer.classList.contains('open')) {
+                    toggleQueue();
+                }
+            }
+        });
+
+        // Auto-update queue count and toggle button state
+        document.addEventListener('htmx:afterOnLoad', function(evt) {
+            if (evt.detail.target.id === 'queue-content') {
+                // Count active items (not completed/failed)
+                const activeItems = evt.detail.target.querySelectorAll('.queue-item').length;
+                const countBadge = document.getElementById('queue-count');
+                const toggleBtn = document.getElementById('queue-toggle');
+                
+                if (activeItems > 0) {
+                    countBadge.innerText = activeItems;
+                    countBadge.classList.remove('hidden');
+                    toggleBtn.classList.add('has-active');
+                } else {
+                    countBadge.classList.add('hidden');
+                    toggleBtn.classList.remove('has-active');
+                }
+            }
+        });
+        
+        // Listen for queue updates from anywhere
+        document.body.addEventListener('queueUpdated', function() {
+            htmx.trigger('#queue-content', 'revealed');
+            htmx.trigger('#install-queue-container', 'revealed');
+        });
+
         function showNotifications() {
             // TODO: Implement notification center
             console.log('Notifications');
@@ -230,6 +457,16 @@
                 !event.target.closest('.sidebar-toggle')) {
                 sidebar.classList.remove('open');
             }
+        });
+    </script>
+    <!-- Installation Progress Modal -->
+    {% include "components/install_progress.html" %}
+    
+    <script>
+        lucide.createIcons();
+        // Re-initialize icons after HTMX loads content
+        document.body.addEventListener('htmx:afterOnLoad', function() {
+            lucide.createIcons();
         });
     </script>
 </body>

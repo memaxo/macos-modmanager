@@ -1,0 +1,74 @@
+<!-- FOMOD Wizard Modal -->
+<div id="fomod-wizard-backdrop" 
+     class="modal-backdrop"
+     style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: var(--z-modal-backdrop); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);"
+     onclick="if (event.target === this) htmx.ajax('POST', '/api/fomod/wizard/{{ session_id }}/cancel', {target: '#fomod-wizard-container', swap: 'innerHTML'})">
+    
+    <div class="modal-content" 
+         style="background: var(--bg-secondary); border-radius: var(--radius-xl); box-shadow: var(--shadow-2xl); width: 90%; max-width: 900px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border-primary);">
+        
+        <!-- Header -->
+        <div style="padding: var(--space-5) var(--space-6); border-bottom: 1px solid var(--border-primary); background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h2 style="font-size: var(--text-xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-1);">
+                        <i data-lucide="settings-2" style="width: 1.25rem; height: 1.25rem; display: inline-block; vertical-align: middle; margin-right: var(--space-2); color: var(--accent-primary);"></i>
+                        Mod Installer
+                    </h2>
+                    <p style="color: var(--text-secondary); font-size: var(--text-sm);">
+                        {{ mod_info.get('name', 'Unknown Mod') }}
+                        {% if mod_info.get('version') %}<span style="color: var(--text-tertiary);"> v{{ mod_info.version }}</span>{% endif %}
+                    </p>
+                </div>
+                <button onclick="htmx.ajax('POST', '/api/fomod/wizard/{{ session_id }}/cancel', {target: '#fomod-wizard-container', swap: 'innerHTML'})"
+                        style="background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: var(--space-2); border-radius: var(--radius-md); transition: all var(--transition-fast);"
+                        onmouseover="this.style.background='var(--bg-hover)'; this.style.color='var(--text-primary)'"
+                        onmouseout="this.style.background='none'; this.style.color='var(--text-secondary)'">
+                    <i data-lucide="x" style="width: 1.25rem; height: 1.25rem;"></i>
+                </button>
+            </div>
+            
+            <!-- Progress Bar -->
+            {% set total_steps = config.total_steps %}
+            {% set current = current_step_data.step_index if current_step_data else 0 %}
+            <div style="margin-top: var(--space-4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
+                    <span style="font-size: var(--text-xs); color: var(--text-tertiary);">
+                        Step {{ current + 1 }} of {{ total_steps }}
+                    </span>
+                    <span style="font-size: var(--text-xs); color: var(--text-secondary);">
+                        {{ current_step_data.step_name if current_step_data else 'Loading...' }}
+                    </span>
+                </div>
+                <div style="height: 4px; background: var(--bg-primary); border-radius: var(--radius-full); overflow: hidden;">
+                    <div style="height: 100%; background: linear-gradient(90deg, var(--accent-primary), var(--accent-hover)); width: {{ ((current + 1) / total_steps * 100) if total_steps > 0 else 0 }}%; transition: width var(--transition-slow);"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step Content Container -->
+        <div id="fomod-step-content" 
+             style="flex: 1; overflow-y: auto; padding: var(--space-6);"
+             hx-get="/api/fomod/wizard/{{ session_id }}/step/{{ current }}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <!-- Loading state -->
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--space-10); color: var(--text-secondary);">
+                <div class="loading-spinner" style="width: 40px; height: 40px; border: 3px solid var(--border-primary); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: var(--space-4);"></div>
+                <p>Loading installer options...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>

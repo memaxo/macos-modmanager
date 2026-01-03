@@ -1,0 +1,121 @@
+<!-- Game Controls Panel -->
+<div class="card" style="padding: var(--space-4);">
+    <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-3); display: flex; align-items: center; gap: var(--space-2);">
+        <i data-lucide="gamepad-2" style="width: 1rem; height: 1rem; color: var(--accent-primary);"></i>
+        Game Controls
+    </h3>
+    
+    <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+        <!-- Primary Controls -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2);">
+            <button 
+                id="stop-btn"
+                class="btn btn-secondary"
+                style="font-size: var(--text-sm); padding: var(--space-2);"
+                hx-post="/api/launcher/stop"
+                hx-target="#notification-area"
+                hx-swap="beforeend"
+                onclick="this.disabled=true; setTimeout(() => this.disabled=false, 2000);">
+                <i data-lucide="square" style="width: 0.9rem; height: 0.9rem;"></i>
+                Stop
+            </button>
+            
+            <button 
+                id="restart-btn"
+                class="btn btn-secondary"
+                style="font-size: var(--text-sm); padding: var(--space-2);"
+                hx-post="/api/launcher/restart"
+                hx-target="#notification-area"
+                hx-swap="beforeend"
+                onclick="this.disabled=true; setTimeout(() => this.disabled=false, 5000);">
+                <i data-lucide="refresh-cw" style="width: 0.9rem; height: 0.9rem;"></i>
+                Restart
+            </button>
+        </div>
+        
+        <!-- Secondary Controls -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2);">
+            <button 
+                id="force-kill-btn"
+                class="btn btn-ghost"
+                style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2); color: var(--accent-error);"
+                hx-post="/api/launcher/force-kill"
+                hx-target="#notification-area"
+                hx-swap="beforeend"
+                onclick="if(!confirm('Force kill the game? This may cause data loss.')) return false; this.disabled=true; setTimeout(() => this.disabled=false, 2000);">
+                <i data-lucide="x-circle" style="width: 0.8rem; height: 0.8rem;"></i>
+                Force Kill
+            </button>
+            
+            <button 
+                id="options-btn"
+                class="btn btn-ghost"
+                style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);"
+                onclick="showLaunchOptionsModal();">
+                <i data-lucide="settings" style="width: 0.8rem; height: 0.8rem;"></i>
+                Options
+            </button>
+        </div>
+        
+        <!-- Performance Profile -->
+        <div style="margin-top: var(--space-2); padding-top: var(--space-2); border-top: 1px solid var(--border-primary);">
+            <label style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1); display: block;">
+                Performance Profile
+            </label>
+            <select 
+                id="performance-profile"
+                class="btn btn-ghost"
+                style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2); width: 100%;"
+                onchange="setPerformanceProfile(this.value);">
+                <option value="default">Default</option>
+                <option value="high">High Performance</option>
+                <option value="background">Background</option>
+            </select>
+        </div>
+        
+        <!-- Hot Reload (Future) -->
+        <button 
+            id="hot-reload-btn"
+            class="btn btn-ghost"
+            style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2); margin-top: var(--space-2); opacity: 0.5; cursor: not-allowed;"
+            disabled
+            title="Not yet implemented">
+            <i data-lucide="zap" style="width: 0.8rem; height: 0.8rem;"></i>
+            Hot Reload Mods
+        </button>
+    </div>
+</div>
+
+<script>
+function showLaunchOptionsModal() {
+    // TODO: Implement launch options modal
+    alert("Launch options modal - Coming soon!");
+}
+
+function setPerformanceProfile(profile) {
+    const niceLevels = {
+        "default": 0,
+        "high": -5,
+        "background": 10
+    };
+    
+    const nice = niceLevels[profile] || 0;
+    
+    fetch('/api/launcher/set-priority?nice=' + nice, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Show notification
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = `Performance profile set to ${profile}`;
+            document.getElementById('notification-area')?.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+    })
+    .catch(error => console.error('Error setting performance profile:', error));
+}
+</script>

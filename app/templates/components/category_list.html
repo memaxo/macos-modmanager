@@ -1,0 +1,33 @@
+<div style="display: flex; flex-direction: column; gap: var(--space-1);">
+    <button class="category-btn active" 
+            hx-get="/api/mods/discovery/search" 
+            hx-target="#browser-results" 
+            hx-vals='{"category_id": null}'
+            onclick="document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active')); this.classList.add('active');"
+            style="text-align: left; padding: var(--space-2) var(--space-3); background: transparent; border: none; color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-md);">
+        All Categories
+    </button>
+    {% for cat in categories %}
+    <button class="category-btn" 
+            hx-get="/api/mods/discovery/search" 
+            hx-target="#browser-results" 
+            hx-vals='{"category_id": {{ cat.category_id }}}'
+            hx-include="#nexus-search, #nexus-sort, #nexus-period, #adult-toggle"
+            onclick="document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active')); this.classList.add('active');"
+            style="text-align: left; padding: var(--space-2) var(--space-3); background: transparent; border: none; color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-md);">
+        {{ cat.name }}
+    </button>
+    {% endfor %}
+</div>
+
+<style>
+    .category-btn:hover {
+        background: var(--bg-tertiary) !important;
+        color: var(--text-primary) !important;
+    }
+    .category-btn.active {
+        background: var(--accent-primary-transparent) !important;
+        color: var(--accent-primary) !important;
+        font-weight: var(--font-semibold);
+    }
+</style>

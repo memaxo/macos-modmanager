@@ -1,0 +1,749 @@
+/* 
+ * Cyberpunk 2077 Mod Manager TUI Styles
+ * 
+ * A cyberpunk-inspired dark theme with cyan/magenta accents
+ */
+
+/* ==================== GLOBAL VARIABLES ==================== */
+
+$primary: #00fff7;
+$primary-dim: #00b3b0;
+$secondary: #ff00ff;
+$secondary-dim: #b300b3;
+$accent: #ff3366;
+$success: #00ff66;
+$warning: #ffcc00;
+$error: #ff3333;
+$surface: #0a0a12;
+$surface-light: #12121f;
+$panel: #1a1a2e;
+$border: #2a2a4a;
+$text: #e0e0e0;
+$text-muted: #808090;
+
+/* ==================== BASE STYLES ==================== */
+
+Screen {
+    background: $surface;
+    color: $text;
+}
+
+Header {
+    background: $panel;
+    color: $primary;
+    text-style: bold;
+    border-bottom: solid $border;
+}
+
+Footer {
+    background: $panel;
+    color: $text-muted;
+    border-top: solid $border;
+}
+
+/* ==================== CONTAINERS ==================== */
+
+#home-container,
+#browse-container,
+#install-container,
+#settings-container,
+#wizard-container {
+    padding: 1 2;
+}
+
+#header-bar,
+#search-bar {
+    height: 3;
+    margin-bottom: 1;
+    dock: top;
+}
+
+/* ==================== SCREEN TITLES ==================== */
+
+.screen-title {
+    text-style: bold;
+    color: $primary;
+    text-align: center;
+    padding: 0 1;
+    margin-bottom: 1;
+}
+
+#title {
+    text-style: bold;
+    color: $primary;
+    width: auto;
+}
+
+/* ==================== DATA TABLES ==================== */
+
+DataTable {
+    background: $surface-light;
+    border: solid $border;
+    height: 100%;
+}
+
+DataTable > .datatable--header {
+    background: $panel;
+    color: $primary;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: $primary;
+    color: $surface;
+}
+
+DataTable > .datatable--even-row {
+    background: $surface-light;
+}
+
+DataTable > .datatable--odd-row {
+    background: $surface;
+}
+
+DataTable > .datatable--hover {
+    background: $panel;
+}
+
+#mod-table {
+    height: 1fr;
+    margin-bottom: 1;
+}
+
+#results-table {
+    height: 1fr;
+}
+
+#files-table {
+    height: auto;
+    max-height: 15;
+}
+
+/* ==================== INPUT WIDGETS ==================== */
+
+Input {
+    background: $surface-light;
+    border: solid $border;
+    color: $text;
+    padding: 0 1;
+}
+
+Input:focus {
+    border: solid $primary;
+}
+
+Input.-invalid {
+    border: solid $error;
+}
+
+#search-input,
+#nexus-search {
+    width: 1fr;
+    margin-right: 1;
+}
+
+#file-path-input,
+#nexus-id-input {
+    width: 1fr;
+}
+
+#game-path-input,
+#api-key-input {
+    width: 1fr;
+    margin-right: 1;
+}
+
+/* ==================== BUTTONS ==================== */
+
+Button {
+    background: $panel;
+    color: $text;
+    border: solid $border;
+    margin: 0 1;
+    min-width: 10;
+}
+
+Button:hover {
+    background: $surface-light;
+    border: solid $primary-dim;
+}
+
+Button:focus {
+    border: solid $primary;
+}
+
+Button.-primary {
+    background: $primary;
+    color: $surface;
+    text-style: bold;
+    border: none;
+}
+
+Button.-primary:hover {
+    background: $primary-dim;
+}
+
+Button.-error {
+    background: $error;
+    color: white;
+    border: none;
+}
+
+Button.-error:hover {
+    background: #cc2929;
+}
+
+#search-btn,
+#browse-btn,
+#detect-game-btn,
+#test-api-btn {
+    min-width: 10;
+}
+
+#cancel-btn {
+    margin-right: auto;
+}
+
+/* ==================== PROGRESS BAR ==================== */
+
+ProgressBar {
+    background: $surface-light;
+    border: solid $border;
+    padding: 0 1;
+    height: 3;
+}
+
+ProgressBar > .bar--bar {
+    color: $primary-dim;
+}
+
+ProgressBar > .bar--complete {
+    color: $success;
+}
+
+#progress-bar {
+    margin: 1 0;
+}
+
+/* ==================== INSTALL PROGRESS ==================== */
+
+#progress-section {
+    background: $panel;
+    border: solid $border;
+    padding: 1 2;
+    margin-top: 1;
+}
+
+#install-title {
+    color: $primary;
+    text-style: bold;
+}
+
+#stage-label {
+    color: $secondary;
+    margin-top: 1;
+}
+
+#message-label {
+    color: $text-muted;
+}
+
+#install-log {
+    height: 10;
+    background: $surface;
+    border: solid $border;
+    margin-top: 1;
+    padding: 1;
+}
+
+#stages-container {
+    margin: 1 0;
+}
+
+/* ==================== WIZARD STYLES ==================== */
+
+#wizard-header {
+    background: $panel;
+    border: solid $border;
+    padding: 1;
+    margin-bottom: 1;
+}
+
+#step-indicator {
+    dock: right;
+    color: $text-muted;
+}
+
+#mod-info-banner {
+    background: $surface-light;
+    border: solid $border;
+    padding: 1;
+    margin-bottom: 1;
+}
+
+#mod-name {
+    color: $primary;
+    text-style: bold;
+}
+
+#mod-description {
+    color: $text-muted;
+}
+
+#step-content {
+    background: $surface-light;
+    border: solid $border;
+    padding: 1 2;
+    height: 1fr;
+}
+
+#step-name {
+    color: $secondary;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#choices-container {
+    margin-top: 1;
+}
+
+.group-name {
+    color: $primary;
+    text-style: bold;
+    margin-top: 1;
+    margin-bottom: 1;
+}
+
+#wizard-nav {
+    dock: bottom;
+    height: 3;
+    margin-top: 1;
+    padding: 0 1;
+}
+
+/* ==================== SETTINGS ==================== */
+
+Collapsible {
+    background: $panel;
+    border: solid $border;
+    margin-bottom: 1;
+}
+
+Collapsible > CollapsibleTitle {
+    background: $surface-light;
+    color: $primary;
+    text-style: bold;
+    padding: 1;
+}
+
+Collapsible > Contents {
+    padding: 1 2;
+}
+
+Switch {
+    margin-right: 1;
+}
+
+Switch > .switch--slider {
+    background: $surface-light;
+    border: solid $border;
+}
+
+Switch.-on > .switch--slider {
+    background: $success;
+    border: solid $success;
+}
+
+#paths-info {
+    padding: 1;
+    background: $surface;
+}
+
+#settings-actions {
+    margin-top: 1;
+}
+
+/* ==================== DIALOGS ==================== */
+
+ModalScreen {
+    align: center middle;
+}
+
+#confirm-dialog,
+#file-picker-dialog,
+#folder-picker-dialog,
+#error-dialog,
+#help-container {
+    background: $panel;
+    border: solid $primary;
+    padding: 1 2;
+    width: 60;
+    max-width: 80%;
+}
+
+#file-picker-dialog,
+#folder-picker-dialog {
+    width: 80;
+    height: 40;
+}
+
+#dialog-title,
+#error-title {
+    color: $primary;
+    text-style: bold;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#dialog-message,
+#error-message {
+    margin-bottom: 1;
+}
+
+#error-code {
+    color: $text-muted;
+}
+
+#error-suggestion {
+    color: $warning;
+    margin-top: 1;
+}
+
+#dialog-buttons {
+    margin-top: 1;
+    align: center middle;
+}
+
+#file-tree-container,
+#folder-tree-container {
+    height: 1fr;
+    background: $surface;
+    border: solid $border;
+    margin: 1 0;
+}
+
+DirectoryTree {
+    background: $surface;
+    padding: 1;
+}
+
+DirectoryTree > .directory-tree--folder {
+    color: $primary;
+}
+
+DirectoryTree > .directory-tree--file {
+    color: $text;
+}
+
+DirectoryTree > .directory-tree--cursor {
+    background: $panel;
+}
+
+#selection-info {
+    height: 2;
+}
+
+/* ==================== HELP SCREEN ==================== */
+
+#help-container {
+    width: 70;
+    height: 40;
+}
+
+#help-scroll {
+    height: 1fr;
+    margin-bottom: 1;
+}
+
+#help-text {
+    padding: 1;
+}
+
+/* ==================== MOD DETAILS ==================== */
+
+#mod-detail-container {
+    background: $panel;
+    border: solid $primary;
+    padding: 1 2;
+    width: 80;
+    height: 50;
+}
+
+#detail-header {
+    margin-bottom: 1;
+}
+
+#mod-title {
+    color: $primary;
+    text-style: bold;
+}
+
+#mod-status {
+    dock: right;
+}
+
+.section-title {
+    color: $secondary;
+    text-style: bold;
+    margin-top: 1;
+    margin-bottom: 1;
+}
+
+#detail-scroll {
+    height: 1fr;
+}
+
+#detail-actions {
+    dock: bottom;
+    height: 3;
+    margin-top: 1;
+}
+
+/* ==================== SIDEBAR DETAILS ==================== */
+
+#mod-details-container {
+    width: 30;
+    background: $panel;
+    border-left: solid $border;
+    padding: 1;
+    dock: right;
+}
+
+#details-header {
+    color: $primary;
+    text-style: bold;
+    border-bottom: solid $border;
+    padding-bottom: 1;
+    margin-bottom: 1;
+}
+
+#no-selection {
+    color: $text-muted;
+    text-align: center;
+    padding: 2;
+}
+
+#details-content Static {
+    margin-bottom: 1;
+}
+
+/* ==================== LOADING ==================== */
+
+LoadingIndicator {
+    color: $primary;
+}
+
+#loading {
+    margin: 2;
+}
+
+/* ==================== STATUS INDICATORS ==================== */
+
+.mod-enabled {
+    color: $success;
+}
+
+.mod-disabled {
+    color: $text-muted;
+}
+
+.compatible {
+    color: $success;
+}
+
+.incompatible {
+    color: $error;
+}
+
+.warning {
+    color: $warning;
+}
+
+/* ==================== DIVIDERS ==================== */
+
+.divider {
+    color: $text-muted;
+    text-align: center;
+    margin: 1 0;
+}
+
+/* ==================== PAGINATION ==================== */
+
+#pagination {
+    dock: bottom;
+    height: 3;
+    margin-top: 1;
+    align: center middle;
+}
+
+#page-indicator {
+    margin: 0 2;
+}
+
+/* ==================== MOD PREVIEW ==================== */
+
+#mod-preview {
+    height: 8;
+    background: $surface-light;
+    border: solid $border;
+    padding: 1;
+    margin-top: 1;
+}
+
+/* ==================== STATUS BAR ==================== */
+
+#status-bar {
+    dock: bottom;
+    height: 1;
+    background: $panel;
+    color: $text-muted;
+    padding: 0 1;
+}
+
+/* ==================== FILE PICKER WIDGET ==================== */
+
+#file-picker-inner {
+    height: auto;
+}
+
+#picker-label {
+    color: $primary;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#input-row {
+    height: 3;
+    margin-bottom: 1;
+}
+
+#tree-container {
+    height: 15;
+    background: $surface;
+    border: solid $border;
+    margin-top: 1;
+}
+
+#tree-scroll {
+    height: 1fr;
+}
+
+#file-info {
+    height: 2;
+    padding: 0 1;
+}
+
+/* ==================== SEARCH BAR WIDGET ==================== */
+
+#search-bar-inner {
+    height: 3;
+}
+
+#type-filter {
+    width: 20;
+    margin: 0 1;
+}
+
+#clear-btn {
+    min-width: 3;
+}
+
+/* ==================== RICHLOG ==================== */
+
+RichLog {
+    background: $surface;
+    border: solid $border;
+    scrollbar-background: $panel;
+    scrollbar-color: $primary-dim;
+}
+
+/* ==================== SELECT ==================== */
+
+Select {
+    background: $surface-light;
+    border: solid $border;
+}
+
+Select:focus {
+    border: solid $primary;
+}
+
+SelectOverlay {
+    background: $panel;
+    border: solid $primary;
+}
+
+SelectOverlay > OptionList > Option {
+    background: $panel;
+    color: $text;
+}
+
+SelectOverlay > OptionList > Option:hover {
+    background: $surface-light;
+}
+
+/* ==================== RADIOSET / CHECKBOX ==================== */
+
+RadioSet {
+    background: $surface-light;
+    border: solid $border;
+    padding: 1;
+    margin: 1 0;
+}
+
+RadioButton {
+    margin: 0 1;
+}
+
+RadioButton > .toggle--button {
+    background: $surface;
+    border: solid $border;
+}
+
+RadioButton.-on > .toggle--button {
+    background: $primary;
+    border: solid $primary;
+}
+
+Checkbox {
+    margin: 1 0;
+}
+
+Checkbox > .toggle--button {
+    background: $surface;
+    border: solid $border;
+}
+
+Checkbox.-on > .toggle--button {
+    background: $success;
+    border: solid $success;
+}
+
+/* ==================== SCROLLBARS ==================== */
+
+*::-webkit-scrollbar {
+    background: $panel;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: $primary-dim;
+}
+
+VerticalScroll {
+    scrollbar-background: $panel;
+    scrollbar-color: $primary-dim;
+    scrollbar-color-hover: $primary;
+}
+
+/* ==================== RESPONSIVE ADJUSTMENTS ==================== */
+
+/* For smaller terminals */
+@media screen and (width < 80) {
+    #mod-details-container {
+        display: none;
+    }
+    
+    #browse-container #mod-preview {
+        display: none;
+    }
+}
