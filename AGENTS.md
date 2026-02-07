@@ -4,6 +4,10 @@
 
 A Python-based mod manager for Cyberpunk 2077 on macOS. Provides web UI (FastAPI), TUI (Textual), and CLI for installing, managing, and validating mods. Integrates with Nexus Mods API for downloads.
 
+## Current Status (Canonical)
+
+See `docs/STATUS.md` for the current run-state and pointers to the active roadmap/status docs.
+
 ## Development Practices
 
 ### Python Standards

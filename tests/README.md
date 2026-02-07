@@ -1,5 +1,7 @@
 # Test Suite for macOS Mod Manager
 
+For overall project status and run-state docs, see `../docs/STATUS.md`.
+
 ## Overview
 
 This test suite covers all critical mod installation functions with comprehensive test cases for success paths, error handling, and edge cases.
@@ -20,6 +22,13 @@ This test suite covers all critical mod installation functions with comprehensiv
 ## Running Tests
 
 ### Install Dependencies
+
+Using `uv` (recommended):
+```bash
+uv sync
+```
+
+Using `pip`:
 ```bash
 pip install -r requirements.txt
 ```

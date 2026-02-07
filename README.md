@@ -2,7 +2,19 @@
 
 Mod manager for Cyberpunk 2077 on macOS with automatic compatibility checking.
 
+For the current status / active workstreams, see `docs/STATUS.md`.
+
 ## Quick Start
+
+### Option A: uv (recommended)
+
+```bash
+uv sync
+alembic upgrade head
+python run.py
+```
+
+### Option B: pip
 
 ```bash
 pip install -r requirements.txt

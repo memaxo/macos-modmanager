@@ -1,6 +1,8 @@
 # Current Optimization Run Status
 **Started:** 2026-01-01
 
+For the canonical project status index, see `docs/STATUS.md`.
+
 ---
 
 ## ✅ Currently Running
