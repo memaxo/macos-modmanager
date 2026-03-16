@@ -1,37 +1,27 @@
-# Cyberpunk 2077 macOS Mod Manager
+# macOS Mod Manager (Legacy)
 
-Mod manager for Cyberpunk 2077 on macOS with automatic compatibility checking.
+Python-based mod manager for Cyberpunk 2077 on macOS.
 
-For the current status / active workstreams, see `docs/STATUS.md`.
+**Status:** Superseded by [CyberMod Studio](../cybermod-studio).
 
-## Quick Start
+## What it does
 
-### Option A: uv (recommended)
+Web UI (FastAPI), TUI (Textual), and CLI for installing and managing Cyberpunk 2077 mods. Integrates with Nexus Mods API. This project has been superseded by CyberMod Studio (native Swift/SwiftUI) but remains available for reference and its profiling/analysis scripts.
+
+## Still useful
+
+- `scripts/` — Game binary analysis and profiling tools
+- `docs/` — RT optimization research, GPU profiling findings, binary analysis reports
+
+## Setup
 
 ```bash
 uv sync
-alembic upgrade head
-python run.py
+python -m app.main  # Web UI on localhost:8000
 ```
 
-### Option B: pip
+## Related projects
 
-```bash
-pip install -r requirements.txt
-alembic upgrade head
-python run.py
-```
-
-Open `http://localhost:8000`
-
-## Features
-
-- macOS compatibility protection (blocks ArchiveXL, Codeware, RED4ext, CET)
-- Nexus Mods integration
-- Collection support
-- Dependency resolution
-- Conflict detection
-
-## Tech Stack
-
-FastAPI + HTMX + SQLite
+| Project | Description |
+|---------|-------------|
+| [CyberMod Studio](../cybermod-studio) | Native replacement |
